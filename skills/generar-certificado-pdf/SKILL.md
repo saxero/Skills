@@ -16,7 +16,7 @@ El skill rellena estos datos en el template y genera un PDF final donde **ningú
 
 ## Requisitos Previos
 
-- Template PDF con formulario requerido
+- Template PDF con formulario requerido y fondo en color blanco donde se colocarán los datos a rellenar
 - Datos del certificado a generar (nombre, título, fecha)
 
 ## Características
