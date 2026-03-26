@@ -53,17 +53,17 @@ La skill usa:
 - **reportlab**: Para rellenar campos de formulario
 - **pdfrw**: Como alternativa para trabajar con AcroForms
 
-## AcroForms/Field Flags Replacement
+### Sustitución de AcroForms/Banderas de Campo
 
-In the actual implementation of our PDF generation process using PyMuPDF, we utilize a placeholder replacement strategy to manage form fields. Field placeholders in our templates are represented using the syntax `{{placeholder}}`. This allows for dynamic content insertion while generating the final PDF document.
+En la implementación actual de nuestro proceso de generación de PDF usando PyMuPDF, utilizamos una estrategia de sustitución de marcadores de posición para gestionar los campos del formulario. Los marcadores de posición de campos en nuestros templates se representan usando[...]
 
-### Editable Fields
+### Campos Editables
 
-It's important to note that the fields are not editable in the generated PDF. This is because the text is effectively burned into the PDF during the generation process, resulting in a static output that cannot be modified post-creation.
+Es importante destacar que los campos no son editables en el PDF generado. Esto se debe a que el texto se integra efectivamente en el PDF durante el proceso de generación, resultando en una salida estática que[...]
 
-## Implementation Details
+## Detalles de Implementación
 
-The specifics of the implementation are encapsulated in the `generar_certificado.py` script. This script orchestrates the placeholder replacement with actual values, following the fixed structure defined in our templates. Make sure to reference that script for any additional technical details regarding the implementation.
+Las especificidades de la implementación se encapsulan en el script `generar_certificado.py`. Este script orquesta la sustitución de marcadores de posición con valores reales, siguiendo la estructura fija definida en[...]
 
 ### Ejemplo de Uso en Python
 
