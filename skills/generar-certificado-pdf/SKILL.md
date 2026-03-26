@@ -53,13 +53,17 @@ La skill usa:
 - **reportlab**: Para rellenar campos de formulario
 - **pdfrw**: Como alternativa para trabajar con AcroForms
 
-## Configuración de Campos No Editables
+## AcroForms/Field Flags Replacement
 
-Los campos se bloquean configurando el flag `/Ff` (Field Flags) en el PDF:
-- Flag 1 (ReadOnly): Hace el campo de solo lectura
-- Flag 4096 (Submit flag): Permite envío de datos
+In the actual implementation of our PDF generation process using PyMuPDF, we utilize a placeholder replacement strategy to manage form fields. Field placeholders in our templates are represented using the syntax `{{placeholder}}`. This allows for dynamic content insertion while generating the final PDF document.
 
-La combinación correcta bloquea el formulario completamente.
+### Editable Fields
+
+It's important to note that the fields are not editable in the generated PDF. This is because the text is effectively burned into the PDF during the generation process, resulting in a static output that cannot be modified post-creation.
+
+## Implementation Details
+
+The specifics of the implementation are encapsulated in the `generar_certificado.py` script. This script orchestrates the placeholder replacement with actual values, following the fixed structure defined in our templates. Make sure to reference that script for any additional technical details regarding the implementation.
 
 ### Ejemplo de Uso en Python
 
