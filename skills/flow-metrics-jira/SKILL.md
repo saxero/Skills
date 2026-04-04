@@ -1,151 +1,155 @@
 ---
 name: flow-metrics-jira
 description: >
-  Analiza métricas de flujo ágil para Scrum Masters y Product Owners a partir
-  de un CSV exportado de Jira. Genera un dashboard HTML interactivo y un PDF
-  de una página con KPIs, throughput adaptativo, aging del WIP, scatter de
-  ítems, análisis narrativo interno y resumen ejecutivo para dirección.
-  Detecta leftovers (tickets del sprint anterior), ajusta el aging relativo
-  a las fechas reales del sprint, y elige automáticamente granularidad diaria
-  o semanal según la duración del sprint.
-  Úsalo siempre que el usuario mencione métricas de sprint, análisis de Jira,
-  throughput, cycle time, lead time, aging de tickets, WIP, retrospectiva con
-  datos, o cuando suba un CSV de Jira y quiera entender qué está pasando en
-  su equipo. También cuando pregunten por el rendimiento del equipo, bloqueos,
-  o quieran algo para mostrar a dirección sobre el progreso del sprint.
+  Analyzes agile flow metrics for Scrum Masters and Product Owners from a
+  Jira CSV export. Generates an interactive HTML dashboard and a printable
+  one-page HTML/PDF report with KPIs, adaptive throughput (daily for sprints
+  ≤14 days, weekly otherwise), WIP aging scatter, leftover detection,
+  sprint-relative aging, and two narrative blocks — one unfiltered for the SM
+  and one executive summary for management.
+
+  TRIGGER this skill whenever: the user uploads or mentions a Jira CSV and
+  wants to understand how the sprint is going or went; they ask about
+  throughput, WIP aging, lead time, cycle time, or sprint health WITH a file
+  attached or data to analyze; they want a dashboard or report for the team
+  or for management based on Jira data; they say things like "how did the
+  sprint go", "analyze the sprint", "show me sprint metrics", "what's blocked",
+  "sprint retrospective with data", "team velocity report", or "something to
+  show to management about the sprint". Also trigger for "sprint review data",
+  "are there leftovers?", "which tickets are aging", "cliff effect".
+  Equivalent Spanish triggers: "cómo ha ido el sprint", "analiza el sprint",
+  "métricas del equipo", "tickets bloqueados", "retrospectiva con datos".
+
+  DO NOT trigger for: conceptual questions about agile metrics with no file
+  ("what is cycle time?"); capacity planning without a CSV; sprint review
+  presentation writing with no data file; setting up Jira boards or workflows;
+  or CSV files clearly not from Jira (sales, HR, finance data). The key signal
+  is a Jira CSV combined with intent to analyze sprint or team flow data.
 ---
 
 # Flow Metrics — Scrum Master & Product Owner Dashboard
 
-Este skill convierte un CSV de Jira en un análisis accionable con dos outputs:
-un **dashboard HTML interactivo** para uso diario y una **página HTML imprimible
-como PDF** para compartir con dirección o guardar como histórico de sprint.
+Converts a Jira CSV export into an actionable analysis with two outputs:
+an **interactive HTML dashboard** for daily SM use and a **printable HTML/PDF
+report** for management or sprint history.
 
-## Flujo de trabajo
+## Workflow
 
-### 1. Recibir el CSV
-El usuario sube un CSV exportado desde Jira (Export → Export Excel CSV all fields).
-Lee los campos clave: `Issue key`, `Issue Type`, `Status`, `Assignee`,
-`Created`, `Updated`, `Resolved`, `Sprint`, `Status Category`.
+### 1. Read the CSV
+Parse the uploaded CSV. Key columns:
+`Issue key`, `Issue Type`, `Status`, `Assignee`, `Created`, `Updated`,
+`Resolved`, `Sprint`, `Status Category`.
 
-Usa el script de análisis para extraer los datos:
+Run the analysis script:
 ```bash
-python3 scripts/analyze_csv.py <ruta_del_csv>
+python3 scripts/analyze_csv.py <csv_path> --sprint-start YYYY-MM-DD --sprint-end YYYY-MM-DD
 ```
 
-### 2. Preguntar las fechas del sprint
-Antes de calcular cualquier métrica, pregunta **siempre** al usuario:
-- Fecha de **inicio** del sprint
-- Fecha de **fin** del sprint
+### 2. Ask sprint dates
+Always ask before calculating any metric:
+- Sprint **start date**
+- Sprint **end date**
 
-Esto es imprescindible porque:
-- Los leftovers (tickets creados antes del sprint) deben calcular su aging
-  desde el inicio del sprint, no desde su fecha de creación original.
-- La duración del sprint determina la granularidad del throughput.
+Keep it short: *"I need the sprint dates to calculate aging correctly. When does it start and end?"*
 
-Ejemplo de pregunta al usuario:
-> "Para calcular el aging correctamente necesito las fechas del sprint.
-> ¿Cuándo empieza y cuándo termina?"
+Reason: leftovers need aging counted from sprint start, not ticket creation;
+and sprint duration determines throughput granularity.
 
-### 3. Detectar leftovers
-Un ticket es **leftover** si su fecha `Created` es anterior al inicio del sprint.
-Su aging se calcula desde `sprint_start`, no desde `Created`.
-Esto evita que inflen artificialmente el aging medio del sprint actual.
+If the user doesn't know, infer from the CSV (min `Created` → max `Resolved`)
+and flag it: *"Using dates inferred from the CSV — correct them if needed."*
 
-### 4. Elegir granularidad del throughput
-- Sprint **≤ 14 días** → granularidad **diaria**
-- Sprint **> 14 días** → granularidad **semanal** (semana ISO)
+### 3. Detect leftovers
+A ticket is a **leftover** if `Created` < `sprint_start`.
+Its aging is counted from `sprint_start`, not from `Created`.
 
-El throughput solo cuenta tickets cerrados (`Resolved` no nulo) cuya fecha
-de resolución esté dentro de la ventana del sprint.
+### 4. Choose throughput granularity
+- Sprint **≤ 14 days** → **daily** granularity
+- Sprint **> 14 days** → **weekly** (ISO week)
 
-### 5. Calcular métricas
-Ver referencia completa en `references/metrics.md`.
+Only count tickets whose `Resolved` date falls within the sprint window.
 
-Métricas principales:
-- **Lead time medio** — desde `Created` hasta `Resolved` (solo cerrados)
-- **Aging medio (sprint-relativo)** — todos los ítems, aging desde sprint_start para leftovers
-- **WIP aging medio** — solo ítems abiertos (sin `Resolved`)
-- **Throughput** — ítems cerrados por período (día o semana según duración)
-- **Cycle time aproximado** — proxy usando `Updated` para ítems abiertos
+### 5. Calculate metrics
+See `references/metrics.md` for full definitions. Summary:
 
-### 6. Generar los dos outputs
-Usa el script generador:
+| Metric | Formula |
+|---|---|
+| Lead time | `Resolved − Created` (closed tickets only) |
+| Sprint-relative aging | All tickets; leftovers age from `sprint_start` |
+| WIP aging | Open tickets only; same sprint-relative rule |
+| Throughput | Closed tickets per day or week within sprint window |
+| Cycle time (proxy) | `Updated − Created` for open tickets |
+
+### 6. Generate outputs
 ```bash
 python3 scripts/generate_outputs.py \
-  --data <ruta_json_analisis> \
-  --sprint-start <YYYY-MM-DD> \
-  --sprint-end <YYYY-MM-DD> \
-  --output-dir /mnt/user-data/outputs/
+  --data <analysis.json> \
+  --sprint-start YYYY-MM-DD \
+  --sprint-end   YYYY-MM-DD \
+  --output-dir   /mnt/user-data/outputs/
 ```
 
-Genera:
-- `dashboard.html` — interactivo, con tabs interno/dirección, filtros, scatter
-- `report.html` — una página, imprimible como PDF desde el navegador
+Produces:
+- `dashboard.html` — tabs (internal / executive), filters, scatter, aging table
+- `report.html` — single printable page for management
 
-### 7. Análisis narrativo
-Además de los gráficos, incluye siempre dos bloques de texto:
+### 7. Write the narrative
+Two blocks, always included:
 
-**Bloque interno (para el SM):**
-- Sin filtros, directo
-- Identifica el patrón de problema real (cliff effect, WIP sin owner, sobrecarga)
-- Señala los 3 hallazgos más importantes con datos concretos
+**SM block** (internal, no filter):
+- Direct, no softening
+- Name the actual problem pattern (cliff effect / unowned WIP / individual overload)
+- 3 findings with concrete numbers
 
-**Bloque ejecutivo (para dirección):**
-- Lenguaje de negocio, sin jerga técnica
-- Cifra clave + qué significa + acción recomendada
-- Máximo 3 párrafos
-
----
-
-## Reglas de interpretación
-
-**Cliff effect:** si el pico de throughput supera 2.5x la media del resto
-de períodos, es cliff effect. Señalarlo explícitamente — no es un buen sprint,
-es trabajo acumulado resuelto en ráfaga al final.
-
-**WIP sin owner:** tickets en estado Open o New sin `Assignee` con más de
-7 días de aging dentro del sprint. Son riesgo activo, no trabajo futuro.
-
-**Sobrecarga individual:** si una persona acumula más del 40% de los ítems
-abiertos, señalarlo. No como crítica a la persona — como señal de distribución
-de trabajo o de bloqueo sistémico.
-
-**Scatter de aging:** el scatter muestra dos vistas:
-- Sin estado "New" — ítems activos (en curso o cerrados)
-- Con todos los estados — visión completa del sprint
-Los ítems "New" se separan porque distorsionan la lectura del trabajo en curso.
+**Executive block** (for management):
+- Business language, no agile jargon
+- One key number + what it means + one recommended action
+- Max 3 short paragraphs
 
 ---
 
-## Outputs esperados
+## Interpretation rules
+
+**Cliff effect** — throughput peak > 2.5× average of other periods.
+Signal: work accumulated and flushed at sprint end. Not a good sprint.
+
+**Unowned WIP** — Open/New ticket, no `Assignee`, aging > 7 days.
+Active risk, not future work. Needs an owner today.
+
+**Individual overload** — one person holds > 40% of open tickets.
+Signal of distribution problem or systemic blocker, not personal failure.
+
+**Aging scatter** — two views:
+- Without "New" — active work (in progress or closed)
+- With all statuses — full sprint picture
+New tickets are split out because they distort the in-progress reading.
+
+---
+
+## Output specs
 
 ### dashboard.html
-- Tab "Uso interno": KPIs con semáforo, throughput, scatter, aging table, narrativa SM
-- Tab "Para dirección": KPIs ejecutivos, burndown acumulado, argumento de negocio
-- Banner de leftovers detectados (si los hay)
-- Tooltip en hover en scatter
-- Filtros por estado / asignado / tipo en scatter
-- Formulario de fechas con recálculo en tiempo real
+- Internal tab: KPI tiles with traffic lights, throughput chart, scatter (dual view),
+  aging top-8 table, SM narrative block
+- Executive tab: executive KPIs, cumulative burndown, business argument block
+- Leftover banner when detected
+- Date form with real-time recalculation
+- Scatter: hover tooltips, filter by status / assignee / type, risk zone lines at 14d and 28d
 
 ### report.html
-- Una sola página, diseño limpio imprimible
-- Cabecera con nombre del sprint y fechas
-- 4 KPIs en fila
-- Throughput + donut de estado lado a lado
-- Bloque ejecutivo
-- Footer con fecha de generación y nota sobre datos
-- Instrucción visible: "Ctrl+P o Cmd+P para exportar a PDF"
+- Single page, print-optimised
+- Header: sprint name + dates
+- 4 KPI tiles
+- Throughput chart + status donut side by side
+- Executive block
+- Footer: generation date + data disclaimer
+- Print hint visible on screen, hidden on print
 
 ---
 
-## Notas para la implementación
+## Implementation notes
 
-- Los campos de fecha en Jira usan formato `dd/Mon/yy h:mm AM/PM`
-  (ej: `26/Mar/26 2:31 PM`). Parsear con `%d/%b/%y %I:%M %p`.
-- Algunos campos de `Assignee` pueden estar vacíos (NaN). Tratar como "Sin asignar".
-- El CSV de Jira tiene 300+ columnas. Solo procesar las relevantes.
-- Si el usuario sube dos CSVs, comparar los `Issue key` para detectar cambios
-  de estado entre exports (evolución del sprint).
-
-Ver ejemplos de análisis en `references/examples.md`.
+- Jira date format: `dd/Mon/yy h:mm AM/PM` → parse with `%d/%b/%y %I:%M %p`
+- Empty `Assignee` → treat as "Sin asignar" / "Unassigned"
+- CSV has 300+ columns — only read the relevant ones
+- Two CSVs uploaded → compare `Issue key` sets to detect status changes between exports
+- See `references/examples.md` for narrative examples and edge case samples
