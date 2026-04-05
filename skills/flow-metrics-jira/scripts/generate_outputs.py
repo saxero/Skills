@@ -19,9 +19,9 @@ def dot_color(val, thresholds, reverse=False):
     return 'green' if val <= lo else 'amber' if val <= hi else 'red'
 
 def status_color(status):
-    colors = {'Closed':'#1D9E75','Done':'#1D9E75','Open':'#EF9F27',
-              'New':'#888780','Rejected':'#D85A30','In Progress':'#378ADD'}
-    return colors.get(status, '#B4B2A9')
+    colors = {'Closed':'#34c759','Done':'#34c759','Open':'#ff9500',
+              'New':'#86868b','Rejected':'#ff3b30','In Progress':'#0071e3'}
+    return colors.get(status, '#86868b')
 
 def js_json(obj):
     return json.dumps(obj, ensure_ascii=False)
@@ -45,8 +45,8 @@ def build_dashboard(data):
     dot_wip = dot_color(k['avg_wip_age'], [5, 10])
     dot_lo  = dot_color(k['leftovers_open'], [0, 3])
 
-    # throughput colors
-    tp_colors = ['"#EF9F27"' if l == tp['current_period'] else '"#378ADD"'
+    # throughput colors (Apple palette)
+    tp_colors = ['"#ff9500"' if l == tp['current_period'] else '"#0071e3"'
                  for l in tp['labels']]
 
     # cliff insight
@@ -60,8 +60,7 @@ def build_dashboard(data):
     leftover_html = ''
     if k['leftovers_total'] > 0:
         leftover_html = f"""
-        <div style="background:#FAEEDA;border:0.5px solid #FAC775;border-radius:8px;
-            padding:.65rem .875rem;font-size:12px;color:#854F0B;margin-bottom:1.25rem;line-height:1.6">
+        <div class="alert alert-warning">
           <strong>{k['leftovers_total']} leftovers del sprint anterior</strong> —
           {k['leftovers_open']} siguen abiertos. Su aging se calcula desde el inicio del sprint
           ({m['sprint_start']}), no desde su fecha de creación original.
@@ -71,8 +70,7 @@ def build_dashboard(data):
     unassigned_html = ''
     if k['unassigned_open'] > 0:
         unassigned_html = f"""
-        <div style="background:#FAECE7;border:0.5px solid #F0997B;border-radius:8px;
-            padding:.65rem .875rem;font-size:12px;color:#993C1D;margin-bottom:.75rem;line-height:1.6">
+        <div class="alert alert-danger">
           ⚠ {k['unassigned_open']} ítems abiertos sin asignar — nadie los va a cerrar solo.
         </div>"""
 
@@ -81,19 +79,18 @@ def build_dashboard(data):
     max_age = max((r['sprint_age'] for r in aw), default=1)
     for r in aw:
         pct = round(r['sprint_age'] / max(max_age, 1) * 100)
-        color = '#D85A30' if r['sprint_age'] > 28 else '#EF9F27' if r['sprint_age'] > 14 else '#1D9E75'
-        assignee = r['assignee'] if r['assignee'] != 'Sin asignar' else '<em style="color:#aaa">Sin asignar</em>'
+        color = '#ff3b30' if r['sprint_age'] > 28 else '#ff9500' if r['sprint_age'] > 14 else '#34c759'
+        assignee = r['assignee'] if r['assignee'] != 'Sin asignar' else '<em style="color:#86868b">Sin asignar</em>'
         aging_rows += f"""
         <tr>
-          <td style="font-size:11px;padding:5px 6px;border-bottom:0.5px solid var(--cb)">{r['issue_key']}</td>
-          <td style="padding:5px 6px;border-bottom:0.5px solid var(--cb)">
-            <span style="font-size:10px;padding:2px 6px;border-radius:4px;
-              background:#E6F1FB;color:#185FA5">{r['issue_type']}</span></td>
-          <td style="font-size:11px;padding:5px 6px;border-bottom:0.5px solid var(--cb)">{r['status']}</td>
-          <td style="font-size:11px;padding:5px 6px;border-bottom:0.5px solid var(--cb)">{assignee}</td>
-          <td style="font-size:11px;padding:5px 6px;border-bottom:0.5px solid var(--cb);font-weight:500">{r['sprint_age']}d</td>
-          <td style="padding:5px 6px;border-bottom:0.5px solid var(--cb)">
-            <div style="width:70px;height:5px;background:#eee;border-radius:3px">
+          <td style="font-family:monospace;font-size:13px">{r['issue_key']}</td>
+          <td><span style="font-size:11px;padding:4px 10px;border-radius:6px;
+            background:#f5f5f7;color:#1d1d1f">{r['issue_type']}</span></td>
+          <td>{r['status']}</td>
+          <td>{assignee}</td>
+          <td style="font-weight:600">{r['sprint_age']}d</td>
+          <td>
+            <div style="width:80px;height:6px;background:#f5f5f7;border-radius:3px">
               <div style="width:{pct}%;height:100%;background:{color};border-radius:3px"></div>
             </div>
           </td>
@@ -102,23 +99,22 @@ def build_dashboard(data):
     # assignee load
     assignee_rows = ''
     max_load = max(ao.values()) if ao else 1
-    colors_pool = ['#378ADD','#534AB7','#D85A30','#1D9E75','#EF9F27','#B4B2A9']
+    colors_pool = ['#0071e3','#5856d6','#ff3b30','#34c759','#ff9500','#af52de']
     for i, (name, count) in enumerate(sorted(ao.items(), key=lambda x: -x[1])):
         pct = round(count / max_load * 100)
         initials = ''.join(w[0].upper() for w in name.split() if len(w) > 1)[:2]
-        color = '#B4B2A9' if name == 'Sin asignar' else colors_pool[i % len(colors_pool)]
-        bar_color = '#D85A30' if count == max_load and count > 5 else color
+        color = '#86868b' if name == 'Sin asignar' else colors_pool[i % len(colors_pool)]
+        bar_color = '#ff3b30' if count == max_load and count > 5 else color
         assignee_rows += f"""
-        <div style="display:flex;align-items:center;gap:10px;padding:6px 0;
-            border-bottom:0.5px solid var(--cb);font-size:12px">
-          <div style="width:26px;height:26px;border-radius:50%;background:#E6F1FB;
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;font-size:14px">
+          <div style="width:32px;height:32px;border-radius:50%;background:#f5f5f7;
               display:flex;align-items:center;justify-content:center;
-              font-size:10px;font-weight:500;color:#185FA5;flex-shrink:0">{initials}</div>
-          <div style="flex:1;color:var(--ct)">{name}</div>
-          <div style="width:90px;height:6px;background:var(--cs);border-radius:3px">
+              font-size:12px;font-weight:600;color:#1d1d1f;flex-shrink:0">{initials}</div>
+          <div style="flex:1;color:#1d1d1f">{name}</div>
+          <div style="width:100px;height:6px;background:#f5f5f7;border-radius:3px">
             <div style="width:{pct}%;height:100%;background:{bar_color};border-radius:3px"></div>
           </div>
-          <div style="font-size:11px;color:var(--cs2);min-width:28px;text-align:right">{count}</div>
+          <div style="font-size:13px;color:#86868b;min-width:32px;text-align:right;font-weight:500">{count}</div>
         </div>"""
 
     sc_labels = js_json(list(sc.keys()))
@@ -138,86 +134,90 @@ def build_dashboard(data):
 <title>Flow Metrics — {m['sprint_name']}</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 :root {{
-  --ct: #1a1a18; --cs: #f1efe8; --cs2: #73726c; --cb: rgba(0,0,0,0.08);
-  --cbg: #ffffff; --cr: #8px; --crl: 12px;
-}}
-@media (prefers-color-scheme: dark) {{
-  :root {{ --ct: #e8e6de; --cs: #2c2c2a; --cs2: #8a8880; --cb: rgba(255,255,255,0.08); --cbg: #1a1a18; }}
+  --ct: #1d1d1f; --cs: #f5f5f7; --cs2: #86868b; --cb: rgba(0,0,0,0.04);
+  --cbg: #ffffff; --cr: 12px; --crl: 16px; --accent: #0071e3;
 }}
 * {{ box-sizing:border-box; margin:0; padding:0; }}
-body {{ font-family: system-ui, -apple-system, sans-serif; background:var(--cs); color:var(--ct); padding:1.5rem; }}
-.tabs {{ display:flex; gap:4px; margin-bottom:1.25rem; }}
-.tab {{ font-size:12px; padding:5px 14px; border-radius:var(--cr); border:0.5px solid var(--cb);
-  background:transparent; cursor:pointer; color:var(--cs2); transition:all .15s; }}
-.tab.active {{ background:var(--cbg); color:var(--ct); font-weight:500; }}
+body {{ font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif; background:#ffffff; color:var(--ct); padding:2.5rem 3rem; font-weight:400; -webkit-font-smoothing:antialiased; }}
+.tabs {{ display:flex; gap:8px; margin-bottom:2rem; }}
+.tab {{ font-size:13px; font-weight:500; padding:8px 20px; border-radius:980px; border:none;
+  background:var(--cs); cursor:pointer; color:var(--cs2); transition:all .2s ease; }}
+.tab:hover {{ background:#e8e8ed; }}
+.tab.active {{ background:var(--ct); color:#fff; }}
 .view {{ display:none; }}
 .view.active {{ display:block; }}
-.section-hdr {{ display:flex; align-items:baseline; gap:8px; margin-bottom:.75rem;
-  border-bottom:0.5px solid var(--cb); padding-bottom:.35rem; }}
-.stitle {{ font-size:11px; font-weight:500; color:var(--cs2); letter-spacing:.07em; text-transform:uppercase; }}
-.ssub {{ font-size:11px; color:var(--cs2); opacity:.7; }}
-.kpis {{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; margin-bottom:1.25rem; }}
-.kpi {{ background:var(--cs); border-radius:var(--cr); padding:11px 13px; position:relative; }}
-.kpi-lbl {{ font-size:10px; color:var(--cs2); margin-bottom:4px; text-transform:uppercase; letter-spacing:.06em; }}
-.kpi-val {{ font-size:22px; font-weight:500; line-height:1; }}
-.kpi-unit {{ font-size:12px; color:var(--cs2); margin-left:2px; }}
-.kpi-delta {{ font-size:11px; margin-top:4px; }}
-.bad {{ color:#D85A30; }} .good {{ color:#1D9E75; }} .neutral {{ color:var(--cs2); }}
-.dot {{ position:absolute; top:9px; right:9px; width:7px; height:7px; border-radius:50%; }}
-.dot.red {{ background:#D85A30; }} .dot.amber {{ background:#EF9F27; }} .dot.green {{ background:#1D9E75; }}
-.row2 {{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:1.25rem; }}
-.card {{ background:var(--cbg); border:0.5px solid var(--cb); border-radius:var(--crl); padding:.875rem 1rem; }}
-.ctitle {{ font-size:13px; font-weight:500; margin-bottom:2px; }}
-.csub {{ font-size:11px; color:var(--cs2); margin-bottom:10px; }}
-.legend {{ display:flex; flex-wrap:wrap; gap:10px; margin-bottom:7px; font-size:11px; color:var(--cs2); }}
-.legend span {{ display:flex; align-items:center; gap:4px; }}
-.ldot {{ width:8px; height:8px; border-radius:2px; display:inline-block; }}
-.pill {{ font-size:10px; padding:2px 8px; border-radius:20px; border:0.5px solid var(--cb);
+.section-hdr {{ display:flex; align-items:baseline; gap:10px; margin-bottom:1.25rem; }}
+.stitle {{ font-size:17px; font-weight:600; color:var(--ct); letter-spacing:-0.02em; }}
+.ssub {{ font-size:13px; color:var(--cs2); font-weight:400; }}
+.kpis {{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; margin-bottom:2rem; }}
+.kpi {{ background:var(--cs); border-radius:12px; padding:18px 20px; position:relative; border:none; }}
+.kpi-lbl {{ font-size:12px; color:var(--cs2); margin-bottom:8px; font-weight:500; }}
+.kpi-val {{ font-size:34px; font-weight:700; line-height:1; letter-spacing:-0.02em; }}
+.kpi-unit {{ font-size:15px; color:var(--cs2); margin-left:4px; font-weight:400; }}
+.kpi-delta {{ font-size:13px; margin-top:8px; font-weight:400; }}
+.bad {{ color:#ff3b30; }} .good {{ color:#34c759; }} .neutral {{ color:var(--cs2); }}
+.dot {{ position:absolute; top:16px; right:16px; width:8px; height:8px; border-radius:50%; }}
+.dot.red {{ background:#ff3b30; }} .dot.amber {{ background:#ff9500; }} .dot.green {{ background:#34c759; }}
+.row2 {{ display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:2rem; }}
+.card {{ background:var(--cbg); border:none; border-radius:16px; padding:1.5rem; box-shadow:0 2px 12px rgba(0,0,0,0.04); }}
+.ctitle {{ font-size:17px; font-weight:600; margin-bottom:4px; letter-spacing:-0.01em; }}
+.csub {{ font-size:13px; color:var(--cs2); margin-bottom:16px; font-weight:400; }}
+.legend {{ display:flex; flex-wrap:wrap; gap:16px; margin-bottom:12px; font-size:13px; color:var(--cs2); }}
+.legend span {{ display:flex; align-items:center; gap:6px; }}
+.ldot {{ width:10px; height:10px; border-radius:3px; display:inline-block; }}
+.pill {{ font-size:12px; font-weight:500; padding:5px 12px; border-radius:980px; border:none;
   color:var(--cs2); background:var(--cs); margin-left:auto; }}
-.insight {{ margin-top:.75rem; padding:.6rem .875rem; background:var(--cs); border-radius:var(--cr);
-  font-size:12px; color:var(--cs2); line-height:1.6; }}
-.insight strong {{ color:var(--ct); font-weight:500; }}
-.narrative {{ border-left:2.5px solid #378ADD; padding:.7rem 1rem; background:var(--cs);
-  border-radius:0 var(--cr) var(--cr) 0; margin-bottom:1.25rem; }}
-.narrative .nlbl {{ font-size:10px; font-weight:500; color:#378ADD; margin-bottom:5px;
-  text-transform:uppercase; letter-spacing:.07em; }}
-.narrative p {{ font-size:13px; line-height:1.6; margin-bottom:5px; }}
+.insight {{ margin-top:1rem; padding:1rem; background:var(--cs); border-radius:12px;
+  font-size:14px; color:#1d1d1f; line-height:1.6; border:none; }}
+.insight strong {{ color:var(--ct); font-weight:600; }}
+.narrative {{ border-left:3px solid var(--accent); padding:1.25rem 1.5rem; background:var(--cs);
+  border-radius:0 12px 12px 0; margin-bottom:2rem; }}
+.narrative .nlbl {{ font-size:12px; font-weight:600; color:var(--accent); margin-bottom:10px; }}
+.narrative p {{ font-size:15px; line-height:1.7; margin-bottom:8px; color:#1d1d1f; }}
 .narrative p:last-child {{ margin-bottom:0; }}
-.narrative strong {{ font-weight:500; }}
-.exec-block {{ border:0.5px solid var(--cb); border-radius:var(--crl); overflow:hidden; margin-bottom:1.25rem; }}
-.exec-hdr {{ background:var(--cs); padding:.5rem 1rem; display:flex; align-items:center;
-  gap:8px; border-bottom:0.5px solid var(--cb); }}
-.exec-hdr-dot {{ width:7px; height:7px; border-radius:50%; background:#378ADD; }}
-.exec-lbl {{ font-size:10px; font-weight:500; text-transform:uppercase; letter-spacing:.07em; color:var(--cs2); }}
-.exec-body {{ padding:.875rem 1rem; font-size:13px; line-height:1.65; }}
-.exec-body strong {{ font-weight:500; }}
-.controls {{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:.75rem; align-items:center; }}
-.ctrl-lbl {{ font-size:11px; color:var(--cs2); text-transform:uppercase; letter-spacing:.06em; margin-right:2px; }}
-.fbtn {{ font-size:11px; padding:4px 10px; border-radius:var(--cr); border:0.5px solid var(--cb);
+.narrative strong {{ font-weight:600; }}
+.exec-block {{ border:none; border-radius:16px; overflow:hidden; margin-bottom:2rem; box-shadow:0 2px 12px rgba(0,0,0,0.04); }}
+.exec-hdr {{ background:var(--cs); padding:.875rem 1.5rem; display:flex; align-items:center; gap:10px; }}
+.exec-hdr-dot {{ width:8px; height:8px; border-radius:50%; background:var(--accent); }}
+.exec-lbl {{ font-size:12px; font-weight:600; color:var(--cs2); }}
+.exec-body {{ padding:1.5rem; font-size:15px; line-height:1.75; color:#1d1d1f; background:#fff; }}
+.exec-body strong {{ font-weight:600; }}
+.controls {{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:1rem; align-items:center; }}
+.ctrl-lbl {{ font-size:13px; color:var(--cs2); font-weight:500; margin-right:8px; }}
+.fbtn {{ font-size:13px; font-weight:500; padding:7px 16px; border-radius:980px; border:none;
   background:transparent; cursor:pointer; color:var(--cs2); transition:all .15s; }}
-.fbtn.active {{ background:var(--cs); color:var(--ct); font-weight:500; }}
-.slegend {{ display:flex; flex-wrap:wrap; gap:12px; margin-bottom:.6rem; font-size:11px; color:var(--cs2); }}
-.slegend span {{ display:flex; align-items:center; gap:5px; cursor:pointer; user-select:none; }}
-.sldot {{ width:9px; height:9px; border-radius:50%; flex-shrink:0; }}
-.szones {{ display:flex; gap:16px; margin-top:.5rem; font-size:11px; color:var(--cs2); }}
-.szones .z {{ display:flex; align-items:center; gap:5px; }}
-.zline {{ width:18px; border-top:1.5px dashed; }}
-.ttip {{ position:absolute; pointer-events:none; display:none; background:var(--cbg);
-  border:0.5px solid var(--cb); border-radius:var(--cr); padding:8px 12px;
-  font-size:12px; color:var(--ct); z-index:10; white-space:nowrap; }}
-.ttip-key {{ font-weight:500; margin-bottom:3px; }}
-.ttip-row {{ color:var(--cs2); font-size:11px; line-height:1.65; }}
+.fbtn:hover {{ background:var(--cs); }}
+.fbtn.active {{ background:var(--accent); color:#fff; }}
+.slegend {{ display:flex; flex-wrap:wrap; gap:16px; margin-bottom:1rem; font-size:13px; color:var(--cs2); }}
+.slegend span {{ display:flex; align-items:center; gap:6px; cursor:pointer; user-select:none; }}
+.sldot {{ width:10px; height:10px; border-radius:50%; flex-shrink:0; }}
+.szones {{ display:flex; gap:24px; margin-top:1rem; font-size:13px; color:var(--cs2); }}
+.szones .z {{ display:flex; align-items:center; gap:6px; }}
+.zline {{ width:24px; border-top:2px dashed; }}
+.ttip {{ position:absolute; pointer-events:none; display:none; background:#fff;
+  border:none; border-radius:12px; padding:12px 16px;
+  font-size:13px; color:var(--ct); z-index:10; white-space:nowrap;
+  box-shadow:0 4px 24px rgba(0,0,0,0.12); }}
+.ttip-key {{ font-weight:600; margin-bottom:4px; }}
+.ttip-row {{ color:var(--cs2); font-size:12px; line-height:1.7; }}
 table {{ width:100%; border-collapse:collapse; }}
-th {{ font-size:10px; color:var(--cs2); font-weight:500; text-align:left;
-  padding:4px 6px; border-bottom:0.5px solid var(--cb); }}
+th {{ font-size:12px; color:var(--cs2); font-weight:500; text-align:left; padding:8px 10px; }}
+td {{ padding:10px; font-size:13px; border-top:1px solid var(--cs); }}
+.sprint-header {{ margin-bottom:2.5rem; }}
+.sprint-header h1 {{ font-size:28px; font-weight:700; letter-spacing:-0.02em; margin-bottom:6px; }}
+.sprint-header .meta {{ font-size:14px; color:var(--cs2); }}
+.alert {{ padding:1rem 1.25rem; border-radius:12px; margin-bottom:1.5rem; font-size:14px; line-height:1.6; }}
+.alert-warning {{ background:#fffbeb; color:#92400e; }}
+.alert-danger {{ background:#fef2f2; color:#991b1b; }}
 </style>
 </head>
 <body>
 
-<div style="margin-bottom:1.25rem">
-  <div style="font-size:18px;font-weight:500;margin-bottom:4px">{m['sprint_name']}</div>
-  <div style="font-size:12px;color:var(--cs2)">{m['sprint_start']} → {m['sprint_end']} · {m['total_items']} ítems · Generado {m['generated_at']}</div>
+<div class="sprint-header">
+  <h1>{m['sprint_name']}</h1>
+  <div class="meta">{m['sprint_start']} → {m['sprint_end']} · {m['total_items']} ítems · Generado {m['generated_at']}</div>
 </div>
 
 <div class="tabs">
@@ -258,8 +258,8 @@ th {{ font-size:10px; color:var(--cs2); font-weight:500; text-align:left;
         <span class="pill">{granularity_label}</span>
       </div>
       <div class="legend">
-        <span><span class="ldot" style="background:#378ADD"></span>Cerrados</span>
-        <span><span class="ldot" style="background:#EF9F27;border-radius:0;width:18px;height:2px;margin-top:3px"></span>Período activo</span>
+        <span><span class="ldot" style="background:#0071e3"></span>Cerrados</span>
+        <span><span class="ldot" style="background:#ff9500;border-radius:0;width:18px;height:2px;margin-top:3px"></span>Período activo</span>
       </div>
       <div style="position:relative;width:100%;height:150px"><canvas id="chart-tp"></canvas></div>
       <div class="insight">{tp_insight}</div>
@@ -293,8 +293,8 @@ th {{ font-size:10px; color:var(--cs2); font-weight:500; text-align:left;
       <div class="ttip" id="ttip-a"><div class="ttip-key" id="ttip-a-key"></div><div class="ttip-row" id="ttip-a-row"></div></div>
     </div>
     <div class="szones">
-      <div class="z"><div class="zline" style="border-color:#EF9F27"></div><span>Riesgo moderado (14d)</span></div>
-      <div class="z"><div class="zline" style="border-color:#D85A30"></div><span>Riesgo alto (28d)</span></div>
+      <div class="z"><div class="zline" style="border-color:#ff9500"></div><span>Riesgo moderado (14d)</span></div>
+      <div class="z"><div class="zline" style="border-color:#ff3b30"></div><span>Riesgo alto (28d)</span></div>
     </div>
   </div>
 
@@ -348,19 +348,18 @@ const ITEMS = DATA.scatter_items;
 const ACTIVE = ITEMS.filter(d => d.status !== 'New');
 
 const palettes = {{
-  status:   {{ 'Open':'#EF9F27','Closed':'#1D9E75','Done':'#1D9E75','Rejected':'#D85A30','New':'#888780','In Progress':'#378ADD' }},
+  status:   {{ 'Open':'#ff9500','Closed':'#34c759','Done':'#34c759','Rejected':'#ff3b30','New':'#86868b','In Progress':'#0071e3' }},
   assignee: {{}},
   type:     {{}}
 }};
-const COLORS = ['#378ADD','#534AB7','#D85A30','#1D9E75','#EF9F27','#1D9E75','#B4B2A9'];
+const COLORS = ['#0071e3','#5856d6','#ff3b30','#34c759','#ff9500','#af52de','#86868b'];
 [...new Set(ITEMS.map(d=>d.assignee))].forEach((a,i) => palettes.assignee[a] = a==='Sin asignar'?'#B4B2A9':COLORS[i%COLORS.length]);
 [...new Set(ITEMS.map(d=>d.type))].forEach((t,i) => palettes.type[t] = COLORS[i%COLORS.length]);
 
 let scatterMode = 'status';
 let scChart;
-const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
-const gridC = isDark?'rgba(255,255,255,0.07)':'rgba(0,0,0,0.06)';
-const labelC = isDark?'#8a8880':'#73726c';
+const gridC = 'rgba(0,0,0,0.04)';
+const labelC = '#86868b';
 
 function switchTab(t) {{
   document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.textContent.trim()===(t==='team'?'Uso interno':'Para dirección')));
@@ -397,13 +396,13 @@ const zonesPlugin = {{ id:'zones', beforeDraw({{ctx,scales:{{x,y}}}}) {{
   const x14=x.getPixelForValue(14), x28=x.getPixelForValue(28), x40=x.getPixelForValue(40);
   const top=y.top, bottom=y.bottom;
   ctx.save();
-  ctx.fillStyle=isDark?'rgba(239,159,39,0.07)':'rgba(239,159,39,0.06)';
+  ctx.fillStyle='rgba(255,149,0,0.06)';
   ctx.fillRect(x14,top,x28-x14,bottom-top);
-  ctx.fillStyle=isDark?'rgba(216,90,48,0.09)':'rgba(216,90,48,0.07)';
+  ctx.fillStyle='rgba(255,59,48,0.06)';
   ctx.fillRect(x28,top,x40-x28,bottom-top);
-  ctx.strokeStyle='#EF9F27'; ctx.setLineDash([4,4]); ctx.lineWidth=1;
+  ctx.strokeStyle='#ff9500'; ctx.setLineDash([4,4]); ctx.lineWidth=1;
   ctx.beginPath(); ctx.moveTo(x14,top); ctx.lineTo(x14,bottom); ctx.stroke();
-  ctx.strokeStyle='#D85A30';
+  ctx.strokeStyle='#ff3b30';
   ctx.beginPath(); ctx.moveTo(x28,top); ctx.lineTo(x28,bottom); ctx.stroke();
   ctx.setLineDash([]); ctx.restore();
 }} }};
@@ -517,10 +516,10 @@ def build_report(data):
     sc_colors = js_json([status_color(s) for s in sc.keys()])
     tp_labels = js_json(tp['labels'])
     tp_data   = js_json(tp['data'])
-    tp_colors = '[' + ','.join(['"#EF9F27"' if l == tp['current_period'] else '"#378ADD"' for l in tp['labels']]) + ']'
+    tp_colors = '[' + ','.join(['"#ff9500"' if l == tp['current_period'] else '"#0071e3"' for l in tp['labels']]) + ']'
 
     risk = 'Alto' if k['pct_done'] < 40 or k['avg_wip_age'] > 10 else 'Medio' if k['pct_done'] < 70 else 'Bajo'
-    risk_color = '#D85A30' if risk == 'Alto' else '#EF9F27' if risk == 'Medio' else '#1D9E75'
+    risk_color = '#ff3b30' if risk == 'Alto' else '#ff9500' if risk == 'Medio' else '#34c759'
 
     if tp['cliff_effect']:
         pct = round(tp['peak_val'] / max(tp['total'], 1) * 100)
@@ -542,35 +541,36 @@ def build_report(data):
 <title>Informe Sprint — {m['sprint_name']}</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 * {{ box-sizing:border-box; margin:0; padding:0; }}
-body {{ font-family: system-ui, -apple-system, sans-serif; color:#1a1a18; background:#fff; padding:2rem 2.5rem; max-width:900px; margin:0 auto; }}
-.print-hint {{ background:#E6F1FB; border:0.5px solid #B5D4F4; border-radius:8px; padding:.6rem 1rem;
-  font-size:12px; color:#185FA5; margin-bottom:1.5rem; display:flex; align-items:center; gap:8px; }}
-.header {{ border-bottom:2px solid #1a1a18; padding-bottom:.75rem; margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:flex-end; }}
-.sprint-name {{ font-size:20px; font-weight:500; }}
-.sprint-meta {{ font-size:11px; color:#73726c; text-align:right; line-height:1.6; }}
-.kpis {{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:1.5rem; }}
-.kpi {{ border:0.5px solid #D3D1C7; border-radius:8px; padding:12px 14px; }}
-.kpi-lbl {{ font-size:10px; color:#73726c; text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px; }}
-.kpi-val {{ font-size:24px; font-weight:500; line-height:1; }}
-.kpi-unit {{ font-size:12px; color:#73726c; margin-left:2px; }}
-.kpi-delta {{ font-size:11px; margin-top:4px; color:#73726c; }}
-.charts-row {{ display:grid; grid-template-columns:3fr 2fr; gap:16px; margin-bottom:1.5rem; }}
-.chart-card {{ border:0.5px solid #D3D1C7; border-radius:8px; padding:.875rem 1rem; }}
-.ctitle {{ font-size:12px; font-weight:500; margin-bottom:2px; }}
-.csub {{ font-size:10px; color:#73726c; margin-bottom:10px; }}
-.exec-block {{ border:0.5px solid #D3D1C7; border-radius:8px; overflow:hidden; margin-bottom:1.5rem; }}
-.exec-hdr {{ background:#F1EFE8; padding:.5rem 1rem; font-size:10px; font-weight:500;
-  text-transform:uppercase; letter-spacing:.07em; color:#73726c;
-  border-bottom:0.5px solid #D3D1C7; display:flex; align-items:center; gap:8px; }}
-.exec-body {{ padding:.875rem 1rem; font-size:13px; line-height:1.7; color:#1a1a18; }}
-.risk-badge {{ display:inline-block; font-size:11px; font-weight:500; padding:3px 10px;
-  border-radius:20px; color:#fff; margin-left:8px; }}
-.footer {{ border-top:0.5px solid #D3D1C7; padding-top:.75rem; font-size:10px; color:#73726c;
+body {{ font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif; color:#1d1d1f; background:#fff; padding:2.5rem 3rem; max-width:1000px; margin:0 auto; -webkit-font-smoothing:antialiased; }}
+.print-hint {{ background:#f5f5f7; border:none; border-radius:12px; padding:1rem 1.25rem;
+  font-size:13px; color:#86868b; margin-bottom:2rem; display:flex; align-items:center; gap:10px; }}
+.print-hint strong {{ color:#1d1d1f; }}
+.header {{ border-bottom:1px solid #f5f5f7; padding-bottom:1.25rem; margin-bottom:2rem; display:flex; justify-content:space-between; align-items:flex-end; }}
+.sprint-name {{ font-size:28px; font-weight:700; letter-spacing:-0.02em; }}
+.sprint-meta {{ font-size:13px; color:#86868b; text-align:right; line-height:1.8; }}
+.kpis {{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:2rem; }}
+.kpi {{ background:#f5f5f7; border:none; border-radius:12px; padding:16px 18px; }}
+.kpi-lbl {{ font-size:12px; color:#86868b; margin-bottom:6px; font-weight:500; }}
+.kpi-val {{ font-size:32px; font-weight:700; line-height:1; letter-spacing:-0.02em; }}
+.kpi-unit {{ font-size:14px; color:#86868b; margin-left:3px; font-weight:400; }}
+.kpi-delta {{ font-size:13px; margin-top:6px; color:#86868b; }}
+.charts-row {{ display:grid; grid-template-columns:3fr 2fr; gap:20px; margin-bottom:2rem; }}
+.chart-card {{ border:none; border-radius:16px; padding:1.5rem; box-shadow:0 2px 12px rgba(0,0,0,0.04); }}
+.ctitle {{ font-size:17px; font-weight:600; margin-bottom:4px; letter-spacing:-0.01em; }}
+.csub {{ font-size:13px; color:#86868b; margin-bottom:16px; }}
+.exec-block {{ border:none; border-radius:16px; overflow:hidden; margin-bottom:2rem; box-shadow:0 2px 12px rgba(0,0,0,0.04); }}
+.exec-hdr {{ background:#f5f5f7; padding:.875rem 1.5rem; font-size:12px; font-weight:600;
+  color:#86868b; display:flex; align-items:center; gap:10px; }}
+.exec-body {{ padding:1.5rem; font-size:15px; line-height:1.75; color:#1d1d1f; background:#fff; }}
+.risk-badge {{ display:inline-block; font-size:12px; font-weight:600; padding:4px 12px;
+  border-radius:980px; color:#fff; margin-left:8px; }}
+.footer {{ border-top:1px solid #f5f5f7; padding-top:1rem; font-size:12px; color:#86868b;
   display:flex; justify-content:space-between; }}
 @media print {{
   .print-hint {{ display:none; }}
-  body {{ padding:1rem 1.5rem; }}
+  body {{ padding:1.5rem 2rem; }}
 }}
 </style>
 </head>
@@ -583,7 +583,7 @@ body {{ font-family: system-ui, -apple-system, sans-serif; color:#1a1a18; backgr
 <div class="header">
   <div>
     <div class="sprint-name">{m['sprint_name']}</div>
-    <div style="font-size:12px;color:#73726c;margin-top:3px">{m['sprint_start']} → {m['sprint_end']} · {m['duration_days']} días</div>
+    <div style="font-size:14px;color:#86868b;margin-top:4px">{m['sprint_start']} → {m['sprint_end']} · {m['duration_days']} días</div>
   </div>
   <div class="sprint-meta">
     {m['total_items']} ítems en el sprint<br>
@@ -629,7 +629,7 @@ body {{ font-family: system-ui, -apple-system, sans-serif; color:#1a1a18; backgr
 </div>
 
 <div class="exec-block">
-  <div class="exec-hdr"><span style="width:7px;height:7px;border-radius:50%;background:#378ADD;display:inline-block"></span>Resumen ejecutivo</div>
+  <div class="exec-hdr"><span style="width:8px;height:8px;border-radius:50%;background:#0071e3;display:inline-block"></span>Resumen ejecutivo</div>
   <div class="exec-body">{exec_txt}</div>
 </div>
 
@@ -639,9 +639,8 @@ body {{ font-family: system-ui, -apple-system, sans-serif; color:#1a1a18; backgr
 </div>
 
 <script>
-const isDark = false;
-const labelC = '#73726c';
-const gridC = 'rgba(0,0,0,0.06)';
+const labelC = '#86868b';
+const gridC = 'rgba(0,0,0,0.04)';
 
 function waitCanvas(id, fn, r=25) {{
   const el = document.getElementById(id);

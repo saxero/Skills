@@ -1,0 +1,383 @@
+{
+  "meta": {
+    "sprint_name": "Sprint 23",
+    "sprint_start": "2026-03-10",
+    "sprint_end": "2026-03-27",
+    "duration_days": 17,
+    "is_short_sprint": false,
+    "total_items": 30,
+    "generated_at": "2026-04-05 19:45"
+  },
+  "kpis": {
+    "avg_lead_time": 11.3,
+    "avg_sprint_age": 6.9,
+    "avg_wip_age": 0.0,
+    "total_closed": 19,
+    "total_open": 11,
+    "pct_done": 63,
+    "leftovers_total": 2,
+    "leftovers_open": 1,
+    "unassigned_open": 3
+  },
+  "throughput": {
+    "labels": [
+      "Sem 11",
+      "Sem 12",
+      "Sem 13"
+    ],
+    "data": [
+      0,
+      3,
+      5
+    ],
+    "current_period": "Sem 13",
+    "granularity": "weekly",
+    "cliff_effect": false,
+    "peak_val": 5,
+    "peak_label": "Sem 13",
+    "total": 8
+  },
+  "status_counts": {
+    "Closed": 17,
+    "Open": 8,
+    "New": 3,
+    "Rejected": 2
+  },
+  "type_counts": {
+    "Story": 26,
+    "Bug": 4
+  },
+  "assignee_open": {
+    "Sin asignar": 3,
+    "Ana García": 2,
+    "María Torres": 2,
+    "Carlos López": 2,
+    "Pedro Ruiz": 2
+  },
+  "scatter_items": [
+    {
+      "key": "PROJ-101",
+      "type": "Story",
+      "status": "Closed",
+      "assignee": "Ana García",
+      "age_days": 14.1,
+      "is_leftover": false
+    },
+    {
+      "key": "PROJ-102",
+      "type": "Story",
+      "status": "Closed",
+      "assignee": "Carlos López",
+      "age_days": 15.2,
+      "is_leftover": false
+    },
+    {
+      "key": "PROJ-103",
+      "type": "Story",
+      "status": "Closed",
+      "assignee": "Ana García",
+      "age_days": 15.0,
+      "is_leftover": false
+    },
+    {
+      "key": "PROJ-104",
+      "type": "Bug",
+      "status": "Closed",
+      "assignee": "María Torres",
+      "age_days": 8.2,
+      "is_leftover": false
+    },
+    {
+      "key": "PROJ-105",
+      "type": "Story",
+      "status": "Closed",
+      "assignee": "Carlos López",
+      "age_days": 14.1,
+      "is_leftover": false
+    },
+    {
+      "key": "PROJ-106",
+      "type": "Story",
+      "status": "Closed",
+      "assignee": "Sin asignar",
+      "age_days": 13.0,
+      "is_leftover": false
+    },
+    {
+      "key": "PROJ-107",
+      "type": "Story",
+      "status": "Closed",
+      "assignee": "Ana García",
+      "age_days": 17.4,
+      "is_leftover": false
+    },
+    {
+      "key": "PROJ-108",
+      "type": "Bug",
+      "status": "Closed",
+      "assignee": "María Torres",
+      "age_days": 10.9,
+      "is_leftover": false
+    },
+    {
+      "key": "PROJ-109",
+      "type": "Story",
+      "status": "Closed",
+      "assignee": "Carlos López",
+      "age_days": 11.3,
+      "is_leftover": false
+    },
+    {
+      "key": "PROJ-110",
+      "type": "Story",
+      "status": "Closed",
+      "assignee": "Ana García",
+      "age_days": 10.3,
+      "is_leftover": false
+    },
+    {
+      "key": "PROJ-111",
+      "type": "Story",
+      "status": "Closed",
+      "assignee": "María Torres",
+      "age_days": 9.4,
+      "is_leftover": false
+    },
+    {
+      "key": "PROJ-112",
+      "type": "Story",
+      "status": "Closed",
+      "assignee": "Carlos López",
+      "age_days": 8.4,
+      "is_leftover": false
+    },
+    {
+      "key": "PROJ-113",
+      "type": "Story",
+      "status": "Closed",
+      "assignee": "Ana García",
+      "age_days": 7.4,
+      "is_leftover": false
+    },
+    {
+      "key": "PROJ-114",
+      "type": "Story",
+      "status": "Closed",
+      "assignee": "María Torres",
+      "age_days": 6.3,
+      "is_leftover": false
+    },
+    {
+      "key": "PROJ-115",
+      "type": "Story",
+      "status": "Closed",
+      "assignee": "Sin asignar",
+      "age_days": 5.5,
+      "is_leftover": false
+    },
+    {
+      "key": "PROJ-116",
+      "type": "Story",
+      "status": "Closed",
+      "assignee": "Carlos López",
+      "age_days": 4.5,
+      "is_leftover": false
+    },
+    {
+      "key": "PROJ-117",
+      "type": "Story",
+      "status": "Open",
+      "assignee": "Ana García",
+      "age_days": 0.0,
+      "is_leftover": false
+    },
+    {
+      "key": "PROJ-118",
+      "type": "Story",
+      "status": "Open",
+      "assignee": "Sin asignar",
+      "age_days": 0.0,
+      "is_leftover": false
+    },
+    {
+      "key": "PROJ-119",
+      "type": "Bug",
+      "status": "Open",
+      "assignee": "María Torres",
+      "age_days": 0.0,
+      "is_leftover": false
+    },
+    {
+      "key": "PROJ-120",
+      "type": "Story",
+      "status": "Open",
+      "assignee": "Carlos López",
+      "age_days": 0.0,
+      "is_leftover": false
+    },
+    {
+      "key": "PROJ-121",
+      "type": "Story",
+      "status": "Open",
+      "assignee": "Ana García",
+      "age_days": 0.0,
+      "is_leftover": false
+    },
+    {
+      "key": "PROJ-122",
+      "type": "Story",
+      "status": "New",
+      "assignee": "Sin asignar",
+      "age_days": 0.0,
+      "is_leftover": false
+    },
+    {
+      "key": "PROJ-123",
+      "type": "Story",
+      "status": "New",
+      "assignee": "Pedro Ruiz",
+      "age_days": 0.0,
+      "is_leftover": false
+    },
+    {
+      "key": "PROJ-124",
+      "type": "Bug",
+      "status": "Open",
+      "assignee": "María Torres",
+      "age_days": 0.0,
+      "is_leftover": false
+    },
+    {
+      "key": "PROJ-125",
+      "type": "Story",
+      "status": "Open",
+      "assignee": "Carlos López",
+      "age_days": 0.0,
+      "is_leftover": false
+    },
+    {
+      "key": "PROJ-126",
+      "type": "Story",
+      "status": "Rejected",
+      "assignee": "Ana García",
+      "age_days": 12.1,
+      "is_leftover": false
+    },
+    {
+      "key": "PROJ-127",
+      "type": "Story",
+      "status": "Rejected",
+      "assignee": "Sin asignar",
+      "age_days": 9.2,
+      "is_leftover": false
+    },
+    {
+      "key": "PROJ-128",
+      "type": "Story",
+      "status": "Closed",
+      "assignee": "Pedro Ruiz",
+      "age_days": 14.5,
+      "is_leftover": true
+    },
+    {
+      "key": "PROJ-129",
+      "type": "Story",
+      "status": "Open",
+      "assignee": "Pedro Ruiz",
+      "age_days": 0.0,
+      "is_leftover": true
+    },
+    {
+      "key": "PROJ-130",
+      "type": "Story",
+      "status": "New",
+      "assignee": "Sin asignar",
+      "age_days": 0.0,
+      "is_leftover": false
+    }
+  ],
+  "aging_wip_top8": [
+    {
+      "issue_key": "PROJ-117",
+      "issue_type": "Story",
+      "status": "Open",
+      "assignee": "Ana García",
+      "sprint_age": 0.0
+    },
+    {
+      "issue_key": "PROJ-118",
+      "issue_type": "Story",
+      "status": "Open",
+      "assignee": "Sin asignar",
+      "sprint_age": 0.0
+    },
+    {
+      "issue_key": "PROJ-119",
+      "issue_type": "Bug",
+      "status": "Open",
+      "assignee": "María Torres",
+      "sprint_age": 0.0
+    },
+    {
+      "issue_key": "PROJ-120",
+      "issue_type": "Story",
+      "status": "Open",
+      "assignee": "Carlos López",
+      "sprint_age": 0.0
+    },
+    {
+      "issue_key": "PROJ-121",
+      "issue_type": "Story",
+      "status": "Open",
+      "assignee": "Ana García",
+      "sprint_age": 0.0
+    },
+    {
+      "issue_key": "PROJ-122",
+      "issue_type": "Story",
+      "status": "New",
+      "assignee": "Sin asignar",
+      "sprint_age": 0.0
+    },
+    {
+      "issue_key": "PROJ-123",
+      "issue_type": "Story",
+      "status": "New",
+      "assignee": "Pedro Ruiz",
+      "sprint_age": 0.0
+    },
+    {
+      "issue_key": "PROJ-124",
+      "issue_type": "Bug",
+      "status": "Open",
+      "assignee": "María Torres",
+      "sprint_age": 0.0
+    }
+  ],
+  "unassigned_open": [
+    "PROJ-118",
+    "PROJ-122",
+    "PROJ-130"
+  ],
+  "lead_times": [
+    14.1,
+    15.2,
+    15.0,
+    8.2,
+    14.1,
+    13.0,
+    17.4,
+    10.9,
+    11.3,
+    10.3,
+    9.4,
+    8.4,
+    7.4,
+    6.3,
+    5.5,
+    4.5,
+    12.1,
+    9.2,
+    23.2
+  ]
+}

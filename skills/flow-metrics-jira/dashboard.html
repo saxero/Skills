@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Flow Metrics — Sprint 23</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+:root {
+  --ct: #1d1d1f; --cs: #f5f5f7; --cs2: #86868b; --cb: rgba(0,0,0,0.04);
+  --cbg: #ffffff; --cr: 12px; --crl: 16px; --accent: #0071e3;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif; background:#ffffff; color:var(--ct); padding:2.5rem 3rem; font-weight:400; -webkit-font-smoothing:antialiased; }
+.tabs { display:flex; gap:8px; margin-bottom:2rem; }
+.tab { font-size:13px; font-weight:500; padding:8px 20px; border-radius:980px; border:none;
+  background:var(--cs); cursor:pointer; color:var(--cs2); transition:all .2s ease; }
+.tab:hover { background:#e8e8ed; }
+.tab.active { background:var(--ct); color:#fff; }
+.view { display:none; }
+.view.active { display:block; }
+.section-hdr { display:flex; align-items:baseline; gap:10px; margin-bottom:1.25rem; }
+.stitle { font-size:17px; font-weight:600; color:var(--ct); letter-spacing:-0.02em; }
+.ssub { font-size:13px; color:var(--cs2); font-weight:400; }
+.kpis { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; margin-bottom:2rem; }
+.kpi { background:var(--cs); border-radius:12px; padding:18px 20px; position:relative; border:none; }
+.kpi-lbl { font-size:12px; color:var(--cs2); margin-bottom:8px; font-weight:500; }
+.kpi-val { font-size:34px; font-weight:700; line-height:1; letter-spacing:-0.02em; }
+.kpi-unit { font-size:15px; color:var(--cs2); margin-left:4px; font-weight:400; }
+.kpi-delta { font-size:13px; margin-top:8px; font-weight:400; }
+.bad { color:#ff3b30; } .good { color:#34c759; } .neutral { color:var(--cs2); }
+.dot { position:absolute; top:16px; right:16px; width:8px; height:8px; border-radius:50%; }
+.dot.red { background:#ff3b30; } .dot.amber { background:#ff9500; } .dot.green { background:#34c759; }
+.row2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:2rem; }
+.card { background:var(--cbg); border:none; border-radius:16px; padding:1.5rem; box-shadow:0 2px 12px rgba(0,0,0,0.04); }
+.ctitle { font-size:17px; font-weight:600; margin-bottom:4px; letter-spacing:-0.01em; }
+.csub { font-size:13px; color:var(--cs2); margin-bottom:16px; font-weight:400; }
+.legend { display:flex; flex-wrap:wrap; gap:16px; margin-bottom:12px; font-size:13px; color:var(--cs2); }
+.legend span { display:flex; align-items:center; gap:6px; }
+.ldot { width:10px; height:10px; border-radius:3px; display:inline-block; }
+.pill { font-size:12px; font-weight:500; padding:5px 12px; border-radius:980px; border:none;
+  color:var(--cs2); background:var(--cs); margin-left:auto; }
+.insight { margin-top:1rem; padding:1rem; background:var(--cs); border-radius:12px;
+  font-size:14px; color:#1d1d1f; line-height:1.6; border:none; }
+.insight strong { color:var(--ct); font-weight:600; }
+.narrative { border-left:3px solid var(--accent); padding:1.25rem 1.5rem; background:var(--cs);
+  border-radius:0 12px 12px 0; margin-bottom:2rem; }
+.narrative .nlbl { font-size:12px; font-weight:600; color:var(--accent); margin-bottom:10px; }
+.narrative p { font-size:15px; line-height:1.7; margin-bottom:8px; color:#1d1d1f; }
+.narrative p:last-child { margin-bottom:0; }
+.narrative strong { font-weight:600; }
+.exec-block { border:none; border-radius:16px; overflow:hidden; margin-bottom:2rem; box-shadow:0 2px 12px rgba(0,0,0,0.04); }
+.exec-hdr { background:var(--cs); padding:.875rem 1.5rem; display:flex; align-items:center; gap:10px; }
+.exec-hdr-dot { width:8px; height:8px; border-radius:50%; background:var(--accent); }
+.exec-lbl { font-size:12px; font-weight:600; color:var(--cs2); }
+.exec-body { padding:1.5rem; font-size:15px; line-height:1.75; color:#1d1d1f; background:#fff; }
+.exec-body strong { font-weight:600; }
+.controls { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:1rem; align-items:center; }
+.ctrl-lbl { font-size:13px; color:var(--cs2); font-weight:500; margin-right:8px; }
+.fbtn { font-size:13px; font-weight:500; padding:7px 16px; border-radius:980px; border:none;
+  background:transparent; cursor:pointer; color:var(--cs2); transition:all .15s; }
+.fbtn:hover { background:var(--cs); }
+.fbtn.active { background:var(--accent); color:#fff; }
+.slegend { display:flex; flex-wrap:wrap; gap:16px; margin-bottom:1rem; font-size:13px; color:var(--cs2); }
+.slegend span { display:flex; align-items:center; gap:6px; cursor:pointer; user-select:none; }
+.sldot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+.szones { display:flex; gap:24px; margin-top:1rem; font-size:13px; color:var(--cs2); }
+.szones .z { display:flex; align-items:center; gap:6px; }
+.zline { width:24px; border-top:2px dashed; }
+.ttip { position:absolute; pointer-events:none; display:none; background:#fff;
+  border:none; border-radius:12px; padding:12px 16px;
+  font-size:13px; color:var(--ct); z-index:10; white-space:nowrap;
+  box-shadow:0 4px 24px rgba(0,0,0,0.12); }
+.ttip-key { font-weight:600; margin-bottom:4px; }
+.ttip-row { color:var(--cs2); font-size:12px; line-height:1.7; }
+table { width:100%; border-collapse:collapse; }
+th { font-size:12px; color:var(--cs2); font-weight:500; text-align:left; padding:8px 10px; }
+td { padding:10px; font-size:13px; border-top:1px solid var(--cs); }
+.sprint-header { margin-bottom:2.5rem; }
+.sprint-header h1 { font-size:28px; font-weight:700; letter-spacing:-0.02em; margin-bottom:6px; }
+.sprint-header .meta { font-size:14px; color:var(--cs2); }
+.alert { padding:1rem 1.25rem; border-radius:12px; margin-bottom:1.5rem; font-size:14px; line-height:1.6; }
+.alert-warning { background:#fffbeb; color:#92400e; }
+.alert-danger { background:#fef2f2; color:#991b1b; }
+</style>
+</head>
+<body>
+
+<div class="sprint-header">
+  <h1>Sprint 23</h1>
+  <div class="meta">2026-03-10 → 2026-03-27 · 30 ítems · Generado 2026-04-05 19:45</div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('team')">Uso interno</button>
+  <button class="tab" onclick="switchTab('exec')">Para dirección</button>
+</div>
+
+<!-- TEAM VIEW -->
+<div id="view-team" class="view active">
+
+  
+        <div class="alert alert-warning">
+          <strong>2 leftovers del sprint anterior</strong> —
+          1 siguen abiertos. Su aging se calcula desde el inicio del sprint
+          (2026-03-10), no desde su fecha de creación original.
+        </div>
+  
+        <div class="alert alert-danger">
+          ⚠ 3 ítems abiertos sin asignar — nadie los va a cerrar solo.
+        </div>
+
+  <div class="section-hdr"><span class="stitle">Métricas clave</span></div>
+  <div class="kpis">
+    <div class="kpi"><div class="dot amber"></div>
+      <div class="kpi-lbl">Aging medio (sprint)</div>
+      <div><span class="kpi-val">6.9</span><span class="kpi-unit">días</span></div>
+      <div class="kpi-delta neutral">Relativo al inicio del sprint</div></div>
+    <div class="kpi"><div class="dot amber"></div>
+      <div class="kpi-lbl">Completados</div>
+      <div><span class="kpi-val">19</span><span class="kpi-unit">/ 30 (63%)</span></div>
+      <div class="kpi-delta neutral">→ Avance parcial</div></div>
+    <div class="kpi"><div class="dot green"></div>
+      <div class="kpi-lbl">WIP aging medio</div>
+      <div><span class="kpi-val">0.0</span><span class="kpi-unit">días</span></div>
+      <div class="kpi-delta neutral">11 ítems abiertos</div></div>
+    <div class="kpi"><div class="dot amber"></div>
+      <div class="kpi-lbl">Leftovers</div>
+      <div><span class="kpi-val">2</span><span class="kpi-unit">/ 30 ítems</span></div>
+      <div class="kpi-delta neutral">1 aún sin cerrar</div></div>
+  </div>
+
+  <div class="row2">
+    <div class="card">
+      <div style="display:flex;align-items:baseline;justify-content:space-between">
+        <div><div class="ctitle">Throughput</div><div class="csub">Ítems cerrados por semana</div></div>
+        <span class="pill">Semanal · 17d</span>
+      </div>
+      <div class="legend">
+        <span><span class="ldot" style="background:#0071e3"></span>Cerrados</span>
+        <span><span class="ldot" style="background:#ff9500;border-radius:0;width:18px;height:2px;margin-top:3px"></span>Período activo</span>
+      </div>
+      <div style="position:relative;width:100%;height:150px"><canvas id="chart-tp"></canvas></div>
+      <div class="insight">Throughput distribuido. Total cerrados: <strong>8 ítems</strong>. Pico en Sem 13 con 5.</div>
+    </div>
+    <div class="card">
+      <div class="ctitle">Estado del sprint</div>
+      <div class="csub">Distribución de ítems</div>
+      <div style="position:relative;width:100%;height:150px"><canvas id="chart-status"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:1.25rem">
+    <div class="ctitle">Carga por persona</div>
+    <div class="csub" style="margin-bottom:8px">Ítems abiertos actualmente</div>
+    
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;font-size:14px">
+          <div style="width:32px;height:32px;border-radius:50%;background:#f5f5f7;
+              display:flex;align-items:center;justify-content:center;
+              font-size:12px;font-weight:600;color:#1d1d1f;flex-shrink:0">SA</div>
+          <div style="flex:1;color:#1d1d1f">Sin asignar</div>
+          <div style="width:100px;height:6px;background:#f5f5f7;border-radius:3px">
+            <div style="width:100%;height:100%;background:#86868b;border-radius:3px"></div>
+          </div>
+          <div style="font-size:13px;color:#86868b;min-width:32px;text-align:right;font-weight:500">3</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;font-size:14px">
+          <div style="width:32px;height:32px;border-radius:50%;background:#f5f5f7;
+              display:flex;align-items:center;justify-content:center;
+              font-size:12px;font-weight:600;color:#1d1d1f;flex-shrink:0">AG</div>
+          <div style="flex:1;color:#1d1d1f">Ana García</div>
+          <div style="width:100px;height:6px;background:#f5f5f7;border-radius:3px">
+            <div style="width:67%;height:100%;background:#5856d6;border-radius:3px"></div>
+          </div>
+          <div style="font-size:13px;color:#86868b;min-width:32px;text-align:right;font-weight:500">2</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;font-size:14px">
+          <div style="width:32px;height:32px;border-radius:50%;background:#f5f5f7;
+              display:flex;align-items:center;justify-content:center;
+              font-size:12px;font-weight:600;color:#1d1d1f;flex-shrink:0">MT</div>
+          <div style="flex:1;color:#1d1d1f">María Torres</div>
+          <div style="width:100px;height:6px;background:#f5f5f7;border-radius:3px">
+            <div style="width:67%;height:100%;background:#ff3b30;border-radius:3px"></div>
+          </div>
+          <div style="font-size:13px;color:#86868b;min-width:32px;text-align:right;font-weight:500">2</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;font-size:14px">
+          <div style="width:32px;height:32px;border-radius:50%;background:#f5f5f7;
+              display:flex;align-items:center;justify-content:center;
+              font-size:12px;font-weight:600;color:#1d1d1f;flex-shrink:0">CL</div>
+          <div style="flex:1;color:#1d1d1f">Carlos López</div>
+          <div style="width:100px;height:6px;background:#f5f5f7;border-radius:3px">
+            <div style="width:67%;height:100%;background:#34c759;border-radius:3px"></div>
+          </div>
+          <div style="font-size:13px;color:#86868b;min-width:32px;text-align:right;font-weight:500">2</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;font-size:14px">
+          <div style="width:32px;height:32px;border-radius:50%;background:#f5f5f7;
+              display:flex;align-items:center;justify-content:center;
+              font-size:12px;font-weight:600;color:#1d1d1f;flex-shrink:0">PR</div>
+          <div style="flex:1;color:#1d1d1f">Pedro Ruiz</div>
+          <div style="width:100px;height:6px;background:#f5f5f7;border-radius:3px">
+            <div style="width:67%;height:100%;background:#ff9500;border-radius:3px"></div>
+          </div>
+          <div style="font-size:13px;color:#86868b;min-width:32px;text-align:right;font-weight:500">2</div>
+        </div>
+  </div>
+
+  <!-- Scatter -->
+  <div class="card" style="margin-bottom:1.25rem">
+    <div class="ctitle">Aging de ítems — sin estado New</div>
+    <div class="csub">Ítems activos (Open, Closed, Rejected) · hover para detalle</div>
+    <div class="controls">
+      <span class="ctrl-lbl">Color por</span>
+      <button class="fbtn active" onclick="setScatterMode('status')">Estado</button>
+      <button class="fbtn" onclick="setScatterMode('assignee')">Asignado</button>
+      <button class="fbtn" onclick="setScatterMode('type')">Tipo</button>
+    </div>
+    <div class="slegend" id="scatter-legend"></div>
+    <div style="position:relative;width:100%;height:260px">
+      <canvas id="scatter-a"></canvas>
+      <div class="ttip" id="ttip-a"><div class="ttip-key" id="ttip-a-key"></div><div class="ttip-row" id="ttip-a-row"></div></div>
+    </div>
+    <div class="szones">
+      <div class="z"><div class="zline" style="border-color:#ff9500"></div><span>Riesgo moderado (14d)</span></div>
+      <div class="z"><div class="zline" style="border-color:#ff3b30"></div><span>Riesgo alto (28d)</span></div>
+    </div>
+  </div>
+
+  <!-- Aging WIP table -->
+  <div class="card" style="margin-bottom:1.25rem">
+    <div class="ctitle">Ítems WIP más antiguos</div>
+    <div class="csub" style="margin-bottom:8px">Top 8 por aging sprint-relativo</div>
+    <table><thead><tr><th>Ítem</th><th>Tipo</th><th>Estado</th><th>Asignado</th><th>Días</th><th>Aging</th></tr></thead>
+    <tbody>
+        <tr>
+          <td style="font-family:monospace;font-size:13px">PROJ-117</td>
+          <td><span style="font-size:11px;padding:4px 10px;border-radius:6px;
+            background:#f5f5f7;color:#1d1d1f">Story</span></td>
+          <td>Open</td>
+          <td>Ana García</td>
+          <td style="font-weight:600">0.0d</td>
+          <td>
+            <div style="width:80px;height:6px;background:#f5f5f7;border-radius:3px">
+              <div style="width:0%;height:100%;background:#34c759;border-radius:3px"></div>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td style="font-family:monospace;font-size:13px">PROJ-118</td>
+          <td><span style="font-size:11px;padding:4px 10px;border-radius:6px;
+            background:#f5f5f7;color:#1d1d1f">Story</span></td>
+          <td>Open</td>
+          <td><em style="color:#86868b">Sin asignar</em></td>
+          <td style="font-weight:600">0.0d</td>
+          <td>
+            <div style="width:80px;height:6px;background:#f5f5f7;border-radius:3px">
+              <div style="width:0%;height:100%;background:#34c759;border-radius:3px"></div>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td style="font-family:monospace;font-size:13px">PROJ-119</td>
+          <td><span style="font-size:11px;padding:4px 10px;border-radius:6px;
+            background:#f5f5f7;color:#1d1d1f">Bug</span></td>
+          <td>Open</td>
+          <td>María Torres</td>
+          <td style="font-weight:600">0.0d</td>
+          <td>
+            <div style="width:80px;height:6px;background:#f5f5f7;border-radius:3px">
+              <div style="width:0%;height:100%;background:#34c759;border-radius:3px"></div>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td style="font-family:monospace;font-size:13px">PROJ-120</td>
+          <td><span style="font-size:11px;padding:4px 10px;border-radius:6px;
+            background:#f5f5f7;color:#1d1d1f">Story</span></td>
+          <td>Open</td>
+          <td>Carlos López</td>
+          <td style="font-weight:600">0.0d</td>
+          <td>
+            <div style="width:80px;height:6px;background:#f5f5f7;border-radius:3px">
+              <div style="width:0%;height:100%;background:#34c759;border-radius:3px"></div>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td style="font-family:monospace;font-size:13px">PROJ-121</td>
+          <td><span style="font-size:11px;padding:4px 10px;border-radius:6px;
+            background:#f5f5f7;color:#1d1d1f">Story</span></td>
+          <td>Open</td>
+          <td>Ana García</td>
+          <td style="font-weight:600">0.0d</td>
+          <td>
+            <div style="width:80px;height:6px;background:#f5f5f7;border-radius:3px">
+              <div style="width:0%;height:100%;background:#34c759;border-radius:3px"></div>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td style="font-family:monospace;font-size:13px">PROJ-122</td>
+          <td><span style="font-size:11px;padding:4px 10px;border-radius:6px;
+            background:#f5f5f7;color:#1d1d1f">Story</span></td>
+          <td>New</td>
+          <td><em style="color:#86868b">Sin asignar</em></td>
+          <td style="font-weight:600">0.0d</td>
+          <td>
+            <div style="width:80px;height:6px;background:#f5f5f7;border-radius:3px">
+              <div style="width:0%;height:100%;background:#34c759;border-radius:3px"></div>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td style="font-family:monospace;font-size:13px">PROJ-123</td>
+          <td><span style="font-size:11px;padding:4px 10px;border-radius:6px;
+            background:#f5f5f7;color:#1d1d1f">Story</span></td>
+          <td>New</td>
+          <td>Pedro Ruiz</td>
+          <td style="font-weight:600">0.0d</td>
+          <td>
+            <div style="width:80px;height:6px;background:#f5f5f7;border-radius:3px">
+              <div style="width:0%;height:100%;background:#34c759;border-radius:3px"></div>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td style="font-family:monospace;font-size:13px">PROJ-124</td>
+          <td><span style="font-size:11px;padding:4px 10px;border-radius:6px;
+            background:#f5f5f7;color:#1d1d1f">Bug</span></td>
+          <td>Open</td>
+          <td>María Torres</td>
+          <td style="font-weight:600">0.0d</td>
+          <td>
+            <div style="width:80px;height:6px;background:#f5f5f7;border-radius:3px">
+              <div style="width:0%;height:100%;background:#34c759;border-radius:3px"></div>
+            </div>
+          </td>
+        </tr></tbody></table>
+  </div>
+
+  <!-- Narrative SM -->
+  <div class="section-hdr"><span class="stitle">Análisis del SM</span><span class="ssub">Sin filtros</span></div>
+  <div class="narrative">
+    <div class="nlbl">Lo que dicen los datos</div>
+    <p id="narrative-text">Generando análisis...</p>
+  </div>
+
+</div>
+
+<!-- EXEC VIEW -->
+<div id="view-exec" class="view">
+  <div class="kpis">
+    <div class="kpi">
+      <div class="kpi-lbl">Avance sprint</div>
+      <div><span class="kpi-val">63</span><span class="kpi-unit">%</span></div>
+      <div class="kpi-delta bad">19 de 30 cerrados</div></div>
+    <div class="kpi">
+      <div class="kpi-lbl">Riesgo de entrega</div>
+      <div><span class="kpi-val" style="font-size:18px">Medio</span></div>
+      <div class="kpi-delta bad">WIP aging 0.0d</div></div>
+    <div class="kpi">
+      <div class="kpi-lbl">Ítems en riesgo</div>
+      <div><span class="kpi-val">0</span></div>
+      <div class="kpi-delta bad">+14 días sin resolver</div></div>
+    <div class="kpi">
+      <div class="kpi-lbl">Sin dueño</div>
+      <div><span class="kpi-val">3</span></div>
+      <div class="kpi-delta bad">Ítems sin asignar</div></div>
+  </div>
+
+  <div class="exec-block">
+    <div class="exec-hdr"><div class="exec-hdr-dot"></div><span class="exec-lbl">Argumento para dirección</span></div>
+    <div class="exec-body" id="exec-text">Generando...</div>
+  </div>
+</div>
+
+<script>
+const DATA = {"meta": {"sprint_name": "Sprint 23", "sprint_start": "2026-03-10", "sprint_end": "2026-03-27", "duration_days": 17, "is_short_sprint": false, "total_items": 30, "generated_at": "2026-04-05 19:45"}, "kpis": {"avg_lead_time": 11.3, "avg_sprint_age": 6.9, "avg_wip_age": 0.0, "total_closed": 19, "total_open": 11, "pct_done": 63, "leftovers_total": 2, "leftovers_open": 1, "unassigned_open": 3}, "throughput": {"labels": ["Sem 11", "Sem 12", "Sem 13"], "data": [0, 3, 5], "current_period": "Sem 13", "granularity": "weekly", "cliff_effect": false, "peak_val": 5, "peak_label": "Sem 13", "total": 8}, "status_counts": {"Closed": 17, "Open": 8, "New": 3, "Rejected": 2}, "type_counts": {"Story": 26, "Bug": 4}, "assignee_open": {"Sin asignar": 3, "Ana García": 2, "María Torres": 2, "Carlos López": 2, "Pedro Ruiz": 2}, "scatter_items": [{"key": "PROJ-101", "type": "Story", "status": "Closed", "assignee": "Ana García", "age_days": 14.1, "is_leftover": false}, {"key": "PROJ-102", "type": "Story", "status": "Closed", "assignee": "Carlos López", "age_days": 15.2, "is_leftover": false}, {"key": "PROJ-103", "type": "Story", "status": "Closed", "assignee": "Ana García", "age_days": 15.0, "is_leftover": false}, {"key": "PROJ-104", "type": "Bug", "status": "Closed", "assignee": "María Torres", "age_days": 8.2, "is_leftover": false}, {"key": "PROJ-105", "type": "Story", "status": "Closed", "assignee": "Carlos López", "age_days": 14.1, "is_leftover": false}, {"key": "PROJ-106", "type": "Story", "status": "Closed", "assignee": "Sin asignar", "age_days": 13.0, "is_leftover": false}, {"key": "PROJ-107", "type": "Story", "status": "Closed", "assignee": "Ana García", "age_days": 17.4, "is_leftover": false}, {"key": "PROJ-108", "type": "Bug", "status": "Closed", "assignee": "María Torres", "age_days": 10.9, "is_leftover": false}, {"key": "PROJ-109", "type": "Story", "status": "Closed", "assignee": "Carlos López", "age_days": 11.3, "is_leftover": false}, {"key": "PROJ-110", "type": "Story", "status": "Closed", "assignee": "Ana García", "age_days": 10.3, "is_leftover": false}, {"key": "PROJ-111", "type": "Story", "status": "Closed", "assignee": "María Torres", "age_days": 9.4, "is_leftover": false}, {"key": "PROJ-112", "type": "Story", "status": "Closed", "assignee": "Carlos López", "age_days": 8.4, "is_leftover": false}, {"key": "PROJ-113", "type": "Story", "status": "Closed", "assignee": "Ana García", "age_days": 7.4, "is_leftover": false}, {"key": "PROJ-114", "type": "Story", "status": "Closed", "assignee": "María Torres", "age_days": 6.3, "is_leftover": false}, {"key": "PROJ-115", "type": "Story", "status": "Closed", "assignee": "Sin asignar", "age_days": 5.5, "is_leftover": false}, {"key": "PROJ-116", "type": "Story", "status": "Closed", "assignee": "Carlos López", "age_days": 4.5, "is_leftover": false}, {"key": "PROJ-117", "type": "Story", "status": "Open", "assignee": "Ana García", "age_days": 0.0, "is_leftover": false}, {"key": "PROJ-118", "type": "Story", "status": "Open", "assignee": "Sin asignar", "age_days": 0.0, "is_leftover": false}, {"key": "PROJ-119", "type": "Bug", "status": "Open", "assignee": "María Torres", "age_days": 0.0, "is_leftover": false}, {"key": "PROJ-120", "type": "Story", "status": "Open", "assignee": "Carlos López", "age_days": 0.0, "is_leftover": false}, {"key": "PROJ-121", "type": "Story", "status": "Open", "assignee": "Ana García", "age_days": 0.0, "is_leftover": false}, {"key": "PROJ-122", "type": "Story", "status": "New", "assignee": "Sin asignar", "age_days": 0.0, "is_leftover": false}, {"key": "PROJ-123", "type": "Story", "status": "New", "assignee": "Pedro Ruiz", "age_days": 0.0, "is_leftover": false}, {"key": "PROJ-124", "type": "Bug", "status": "Open", "assignee": "María Torres", "age_days": 0.0, "is_leftover": false}, {"key": "PROJ-125", "type": "Story", "status": "Open", "assignee": "Carlos López", "age_days": 0.0, "is_leftover": false}, {"key": "PROJ-126", "type": "Story", "status": "Rejected", "assignee": "Ana García", "age_days": 12.1, "is_leftover": false}, {"key": "PROJ-127", "type": "Story", "status": "Rejected", "assignee": "Sin asignar", "age_days": 9.2, "is_leftover": false}, {"key": "PROJ-128", "type": "Story", "status": "Closed", "assignee": "Pedro Ruiz", "age_days": 14.5, "is_leftover": true}, {"key": "PROJ-129", "type": "Story", "status": "Open", "assignee": "Pedro Ruiz", "age_days": 0.0, "is_leftover": true}, {"key": "PROJ-130", "type": "Story", "status": "New", "assignee": "Sin asignar", "age_days": 0.0, "is_leftover": false}], "aging_wip_top8": [{"issue_key": "PROJ-117", "issue_type": "Story", "status": "Open", "assignee": "Ana García", "sprint_age": 0.0}, {"issue_key": "PROJ-118", "issue_type": "Story", "status": "Open", "assignee": "Sin asignar", "sprint_age": 0.0}, {"issue_key": "PROJ-119", "issue_type": "Bug", "status": "Open", "assignee": "María Torres", "sprint_age": 0.0}, {"issue_key": "PROJ-120", "issue_type": "Story", "status": "Open", "assignee": "Carlos López", "sprint_age": 0.0}, {"issue_key": "PROJ-121", "issue_type": "Story", "status": "Open", "assignee": "Ana García", "sprint_age": 0.0}, {"issue_key": "PROJ-122", "issue_type": "Story", "status": "New", "assignee": "Sin asignar", "sprint_age": 0.0}, {"issue_key": "PROJ-123", "issue_type": "Story", "status": "New", "assignee": "Pedro Ruiz", "sprint_age": 0.0}, {"issue_key": "PROJ-124", "issue_type": "Bug", "status": "Open", "assignee": "María Torres", "sprint_age": 0.0}], "unassigned_open": ["PROJ-118", "PROJ-122", "PROJ-130"], "lead_times": [14.1, 15.2, 15.0, 8.2, 14.1, 13.0, 17.4, 10.9, 11.3, 10.3, 9.4, 8.4, 7.4, 6.3, 5.5, 4.5, 12.1, 9.2, 23.2]};
+const ITEMS = DATA.scatter_items;
+const ACTIVE = ITEMS.filter(d => d.status !== 'New');
+
+const palettes = {
+  status:   { 'Open':'#ff9500','Closed':'#34c759','Done':'#34c759','Rejected':'#ff3b30','New':'#86868b','In Progress':'#0071e3' },
+  assignee: {},
+  type:     {}
+};
+const COLORS = ['#0071e3','#5856d6','#ff3b30','#34c759','#ff9500','#af52de','#86868b'];
+[...new Set(ITEMS.map(d=>d.assignee))].forEach((a,i) => palettes.assignee[a] = a==='Sin asignar'?'#B4B2A9':COLORS[i%COLORS.length]);
+[...new Set(ITEMS.map(d=>d.type))].forEach((t,i) => palettes.type[t] = COLORS[i%COLORS.length]);
+
+let scatterMode = 'status';
+let scChart;
+const gridC = 'rgba(0,0,0,0.04)';
+const labelC = '#86868b';
+
+function switchTab(t) {
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.textContent.trim()===(t==='team'?'Uso interno':'Para dirección')));
+  document.getElementById('view-team').classList.toggle('active', t==='team');
+  document.getElementById('view-exec').classList.toggle('active', t!=='team');
+}
+
+function waitCanvas(id, fn, r=25) {
+  const el = document.getElementById(id);
+  if (el && el.offsetParent!==null) { fn(el); return; }
+  if (r>0) setTimeout(()=>waitCanvas(id,fn,r-1), 80);
+}
+
+// Throughput
+waitCanvas('chart-tp', el => {
+  new Chart(el, {
+    type:'bar', data:{ labels:["Sem 11", "Sem 12", "Sem 13"], datasets:[{ data:[0, 3, 5], backgroundColor:["#0071e3","#0071e3","#ff9500"], borderRadius:4, borderSkipped:false }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false}, tooltip:{bodyFont:{size:11},titleFont:{size:11}} },
+      scales:{ x:{grid:{display:false}, ticks:{color:labelC, font:{size:10}, maxRotation:0, autoSkip:false}},
+        y:{grid:{color:gridC}, ticks:{color:labelC,font:{size:10},stepSize:1}, beginAtZero:true} } } });
+});
+
+// Status donut
+waitCanvas('chart-status', el => {
+  new Chart(el, {
+    type:'doughnut',
+    data:{ labels:["Closed", "Open", "New", "Rejected"], datasets:[{ data:[17, 8, 3, 2], backgroundColor:["#34c759", "#ff9500", "#86868b", "#ff3b30"], borderWidth:0, hoverOffset:4 }] },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'60%',
+      plugins:{ legend:{display:true, position:'right', labels:{font:{size:10},color:labelC,boxWidth:8,padding:8}}, tooltip:{bodyFont:{size:11}} } } });
+});
+
+// Scatter
+const zonesPlugin = { id:'zones', beforeDraw({ctx,scales:{x,y}}) {
+  const x14=x.getPixelForValue(14), x28=x.getPixelForValue(28), x40=x.getPixelForValue(40);
+  const top=y.top, bottom=y.bottom;
+  ctx.save();
+  ctx.fillStyle='rgba(255,149,0,0.06)';
+  ctx.fillRect(x14,top,x28-x14,bottom-top);
+  ctx.fillStyle='rgba(255,59,48,0.06)';
+  ctx.fillRect(x28,top,x40-x28,bottom-top);
+  ctx.strokeStyle='#ff9500'; ctx.setLineDash([4,4]); ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(x14,top); ctx.lineTo(x14,bottom); ctx.stroke();
+  ctx.strokeStyle='#ff3b30';
+  ctx.beginPath(); ctx.moveTo(x28,top); ctx.lineTo(x28,bottom); ctx.stroke();
+  ctx.setLineDash([]); ctx.restore();
+} };
+
+function buildScatterDatasets(items, mode) {
+  const groups = {};
+  items.forEach((d,i) => {
+    const k = mode==='status'?d.status:mode==='assignee'?d.assignee:d.type;
+    if (!groups[k]) groups[k]=[];
+    groups[k].push({ x:d.age_days, y:Math.sin(i*137.508)*0.42, _d:d });
+  });
+  return Object.entries(groups).map(([label,pts]) => {
+    const c = (palettes[mode][label]||'#B4B2A9');
+    return { label, data:pts, backgroundColor:c+'bb', borderColor:c, borderWidth:1.5, pointRadius:7, pointHoverRadius:10 };
+  });
+}
+
+function buildScatterLegend(items, mode) {
+  const leg = document.getElementById('scatter-legend');
+  const present = [...new Set(items.map(d => mode==='status'?d.status:mode==='assignee'?d.assignee:d.type))];
+  leg.innerHTML = present.map(k => {
+    const c = palettes[mode][k]||'#B4B2A9';
+    return `<span onclick="toggleScatterSeries('${k}')"><span class="sldot" style="background:${c}"></span>${k}</span>`;
+  }).join('');
+}
+
+function toggleScatterSeries(label) {
+  scChart.data.datasets.forEach((ds,i) => { if(ds.label===label) scChart.getDatasetMeta(i).hidden=!scChart.getDatasetMeta(i).hidden; });
+  scChart.update();
+}
+
+function setScatterMode(m) {
+  scatterMode = m;
+  document.querySelectorAll('.fbtn').forEach(b => b.classList.toggle('active', b.textContent.trim()===(m==='status'?'Estado':m==='assignee'?'Asignado':'Tipo')));
+  scChart.data.datasets = buildScatterDatasets(ACTIVE, m);
+  scChart.update();
+  buildScatterLegend(ACTIVE, m);
+}
+
+waitCanvas('scatter-a', el => {
+  scChart = new Chart(el, {
+    type:'scatter', data:{ datasets: buildScatterDatasets(ACTIVE, scatterMode) },
+    options:{ responsive:true, maintainAspectRatio:false, animation:{duration:250},
+      plugins:{ legend:{display:false}, tooltip:{enabled:false} },
+      scales:{ x:{ title:{display:true,text:'Edad del ítem (días, relativa al sprint)',color:labelC,font:{size:11}},
+        min:-1, max:Math.max(...ACTIVE.map(d=>d.age_days))+3,
+        grid:{color:gridC}, ticks:{color:labelC,font:{size:10},stepSize:7} },
+        y:{ display:false, min:-1.3, max:1.3 } } },
+    plugins:[zonesPlugin]
+  });
+  buildScatterLegend(ACTIVE, scatterMode);
+
+  const tip = document.getElementById('ttip-a');
+  el.addEventListener('mousemove', evt => {
+    const pts = scChart.getElementsAtEventForMode(evt,'nearest',{intersect:true},false);
+    if (!pts.length) { tip.style.display='none'; return; }
+    const d = scChart.data.datasets[pts[0].datasetIndex].data[pts[0].index]._d;
+    document.getElementById('ttip-a-key').textContent = d.key;
+    document.getElementById('ttip-a-row').innerHTML = `${d.type} · ${d.status}<br>Asignado: ${d.assignee}<br>Edad en sprint: <strong>${d.age_days} días</strong>${d.is_leftover?' · <em>leftover</em>':''}`;
+    const wrap = el.parentElement.getBoundingClientRect();
+    let left = evt.clientX-wrap.left+14;
+    if(left+230>wrap.width) left=evt.clientX-wrap.left-240;
+    tip.style.left=left+'px'; tip.style.top=(evt.clientY-wrap.top-10)+'px'; tip.style.display='block';
+  });
+  el.addEventListener('mouseleave', ()=>{ tip.style.display='none'; });
+});
+
+// Narrative generation
+function buildNarrative(data) {
+  const k = data.kpis, tp = data.throughput, m = data.meta;
+  const unassigned = k.unassigned_open;
+  const cliff = tp.cliff_effect;
+  const topPerson = Object.entries(data.assignee_open).sort((a,b)=>b[1]-a[1])[0];
+  let txt = '';
+  if (k.pct_done < 40) txt += `El sprint tiene un <strong>riesgo de entrega alto</strong> — solo el ${k.pct_done}% completado. `;
+  else txt += `El sprint lleva un ${k.pct_done}% completado. `;
+  if (cliff) txt += `El throughput muestra <strong>cliff effect</strong>: el ${Math.round(tp.peak_val/Math.max(tp.total,1)*100)}% de los cierres ocurrió en el período ${tp.peak_label}. El trabajo se acumula y se resuelve en ráfaga. `;
+  if (unassigned > 0) txt += `<strong>${unassigned} ítems abiertos sin asignado</strong> — nadie los va a cerrar solo. Requieren owner inmediato. `;
+  if (topPerson && topPerson[1] > Object.values(data.assignee_open).reduce((a,b)=>a+b,0)*0.4)
+    txt += `<strong>${topPerson[0]}</strong> acumula ${topPerson[1]} de los ${k.total_open} ítems abiertos — revisar distribución o posible bloqueo. `;
+  if (k.leftovers_open > 0) txt += `Hay ${k.leftovers_open} leftovers del sprint anterior sin cerrar — están consumiendo capacidad de este sprint. `;
+  return txt || 'Sin alertas críticas detectadas en este sprint.';
+}
+
+function buildExec(data) {
+  const k = data.kpis, tp = data.throughput, m = data.meta;
+  const risk = k.pct_done<40||k.avg_wip_age>10?'alto':k.pct_done<70?'medio':'bajo';
+  return `El Sprint <strong>${m.sprint_name}</strong> tiene un riesgo de entrega <strong>${risk}</strong>.
+  El equipo lleva el ${k.pct_done}% del trabajo cerrado con un aging medio de ${k.avg_wip_age} días en los ítems abiertos.<br><br>
+  ${tp.cliff_effect?`El patrón de entrega muestra trabajo acumulado que se resuelve en ráfaga al final del sprint — no es predecible ni sostenible a largo plazo.<br><br>`:`El throughput es razonablemente distribuido a lo largo del sprint.<br><br>`}
+  ${k.unassigned_open>0?`Acción inmediata recomendada: asignar los <strong>${k.unassigned_open} ítems sin responsable</strong> antes de fin de jornada. Sin dueño no hay entrega.`:`Todos los ítems activos tienen responsable asignado.`}`;
+}
+
+document.getElementById('narrative-text').innerHTML = buildNarrative(DATA);
+document.getElementById('exec-text').innerHTML = buildExec(DATA);
+</script>
+</body>
+</html>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Informe Sprint — Sprint 23</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif; color:#1d1d1f; background:#fff; padding:2.5rem 3rem; max-width:1000px; margin:0 auto; -webkit-font-smoothing:antialiased; }
+.print-hint { background:#f5f5f7; border:none; border-radius:12px; padding:1rem 1.25rem;
+  font-size:13px; color:#86868b; margin-bottom:2rem; display:flex; align-items:center; gap:10px; }
+.print-hint strong { color:#1d1d1f; }
+.header { border-bottom:1px solid #f5f5f7; padding-bottom:1.25rem; margin-bottom:2rem; display:flex; justify-content:space-between; align-items:flex-end; }
+.sprint-name { font-size:28px; font-weight:700; letter-spacing:-0.02em; }
+.sprint-meta { font-size:13px; color:#86868b; text-align:right; line-height:1.8; }
+.kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:2rem; }
+.kpi { background:#f5f5f7; border:none; border-radius:12px; padding:16px 18px; }
+.kpi-lbl { font-size:12px; color:#86868b; margin-bottom:6px; font-weight:500; }
+.kpi-val { font-size:32px; font-weight:700; line-height:1; letter-spacing:-0.02em; }
+.kpi-unit { font-size:14px; color:#86868b; margin-left:3px; font-weight:400; }
+.kpi-delta { font-size:13px; margin-top:6px; color:#86868b; }
+.charts-row { display:grid; grid-template-columns:3fr 2fr; gap:20px; margin-bottom:2rem; }
+.chart-card { border:none; border-radius:16px; padding:1.5rem; box-shadow:0 2px 12px rgba(0,0,0,0.04); }
+.ctitle { font-size:17px; font-weight:600; margin-bottom:4px; letter-spacing:-0.01em; }
+.csub { font-size:13px; color:#86868b; margin-bottom:16px; }
+.exec-block { border:none; border-radius:16px; overflow:hidden; margin-bottom:2rem; box-shadow:0 2px 12px rgba(0,0,0,0.04); }
+.exec-hdr { background:#f5f5f7; padding:.875rem 1.5rem; font-size:12px; font-weight:600;
+  color:#86868b; display:flex; align-items:center; gap:10px; }
+.exec-body { padding:1.5rem; font-size:15px; line-height:1.75; color:#1d1d1f; background:#fff; }
+.risk-badge { display:inline-block; font-size:12px; font-weight:600; padding:4px 12px;
+  border-radius:980px; color:#fff; margin-left:8px; }
+.footer { border-top:1px solid #f5f5f7; padding-top:1rem; font-size:12px; color:#86868b;
+  display:flex; justify-content:space-between; }
+@media print {
+  .print-hint { display:none; }
+  body { padding:1.5rem 2rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="print-hint">
+  🖨 Para exportar como PDF: <strong>Ctrl+P</strong> (Windows/Linux) o <strong>Cmd+P</strong> (Mac) → Guardar como PDF
+</div>
+
+<div class="header">
+  <div>
+    <div class="sprint-name">Sprint 23</div>
+    <div style="font-size:14px;color:#86868b;margin-top:4px">2026-03-10 → 2026-03-27 · 17 días</div>
+  </div>
+  <div class="sprint-meta">
+    30 ítems en el sprint<br>
+    Riesgo de entrega: <span class="risk-badge" style="background:#ff9500">Medio</span><br>
+    Generado el 2026-04-05 19:45
+  </div>
+</div>
+
+<div class="kpis">
+  <div class="kpi">
+    <div class="kpi-lbl">Completados</div>
+    <div><span class="kpi-val">19</span><span class="kpi-unit">/ 30</span></div>
+    <div class="kpi-delta">63% del sprint</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-lbl">WIP aging medio</div>
+    <div><span class="kpi-val">0.0</span><span class="kpi-unit">días</span></div>
+    <div class="kpi-delta">11 ítems abiertos</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-lbl">Leftovers</div>
+    <div><span class="kpi-val">2</span><span class="kpi-unit">ítems</span></div>
+    <div class="kpi-delta">1 sin cerrar</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-lbl">Sin asignar</div>
+    <div><span class="kpi-val">3</span><span class="kpi-unit">abiertos</span></div>
+    <div class="kpi-delta">Requieren owner</div>
+  </div>
+</div>
+
+<div class="charts-row">
+  <div class="chart-card">
+    <div class="ctitle">Throughput</div>
+    <div class="csub">Por semana · período activo en naranja</div>
+    <div style="position:relative;width:100%;height:140px"><canvas id="rpt-tp"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="ctitle">Estado</div>
+    <div class="csub">Distribución de ítems</div>
+    <div style="position:relative;width:100%;height:140px"><canvas id="rpt-status"></canvas></div>
+  </div>
+</div>
+
+<div class="exec-block">
+  <div class="exec-hdr"><span style="width:8px;height:8px;border-radius:50%;background:#0071e3;display:inline-block"></span>Resumen ejecutivo</div>
+  <div class="exec-body">El sprint lleva el 63% completado con 19 de 30 ítems cerrados.
+        El throughput se distribuye de forma razonable a lo largo del sprint.
+        El WIP aging medio es de 0.0 días — dentro de rangos aceptables. Acción recomendada: asignar los 3 ítems sin responsable.</div>
+</div>
+
+<div class="footer">
+  <span>Flow Metrics Skill · Sprint ERNI — generado automáticamente desde CSV de Jira</span>
+  <span>Cycle time como proxy vía campo Updated · Para análisis completo usar API de Jira</span>
+</div>
+
+<script>
+const labelC = '#86868b';
+const gridC = 'rgba(0,0,0,0.04)';
+
+function waitCanvas(id, fn, r=25) {
+  const el = document.getElementById(id);
+  if (el) { fn(el); return; }
+  if (r>0) setTimeout(()=>waitCanvas(id,fn,r-1), 80);
+}
+
+waitCanvas('rpt-tp', el => {
+  new Chart(el, {
+    type:'bar', data:{ labels:["Sem 11", "Sem 12", "Sem 13"], datasets:[{ data:[0, 3, 5], backgroundColor:["#0071e3","#0071e3","#ff9500"], borderRadius:3, borderSkipped:false }] },
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{bodyFont:{size:10},titleFont:{size:10}} },
+      scales:{ x:{ grid:{display:false}, ticks:{color:labelC,font:{size:9},maxRotation:45} },
+        y:{ grid:{color:gridC}, ticks:{color:labelC,font:{size:9},stepSize:1}, beginAtZero:true } } } });
+});
+
+waitCanvas('rpt-status', el => {
+  new Chart(el, {
+    type:'doughnut', data:{ labels:["Closed", "Open", "New", "Rejected"], datasets:[{ data:[17, 8, 3, 2], backgroundColor:["#34c759", "#ff9500", "#86868b", "#ff3b30"], borderWidth:0, hoverOffset:3 }] },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'58%',
+      plugins:{ legend:{display:true,position:'right',labels:{font:{size:9},color:labelC,boxWidth:7,padding:6}}, tooltip:{bodyFont:{size:10}} } } });
+});
+</script>
+</body>
+</html>
